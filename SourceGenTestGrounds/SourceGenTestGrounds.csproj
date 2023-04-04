@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <!-- Add this as a new ItemGroup, replacing paths and names appropriately -->
+  <ItemGroup>
+    <ProjectReference Include="..\LatiosFramework.SourceGen\LatiosFramework.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <!-- Exclude the output of source generators from the compilation -->
+  </ItemGroup>
+
+</Project>
