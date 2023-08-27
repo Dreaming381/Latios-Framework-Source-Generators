@@ -13,7 +13,7 @@ namespace LatiosFramework.SourceGen
             var printer = scopePrinter.Printer;
             printer.PrintLine("[global::System.Runtime.CompilerServices.CompilerGenerated]");
             if (writeBurst)
-            printer.PrintLine("[global::Unity.Burst.BurstCompile]");
+                printer.PrintLine("[global::Unity.Burst.BurstCompile]");
             printer.PrintBeginLine();
             foreach (var m in componentSyntax.Modifiers)
                 printer.Print(m.ToString()).Print(" ");
@@ -22,18 +22,21 @@ namespace LatiosFramework.SourceGen
             {
                 printer.OpenScope();
                 printer.PrintLine("public struct ExistComponent : global::Unity.Entities.IComponentData { }");
-                printer.PrintBeginLine("public struct CleanupComponent : global::Unity.Entities.ICleanupComponentData, global::Latios.InternalSourceGen.StaticAPI.I").Print(componentTypeString).
+                printer.PrintBeginLine("public struct CleanupComponent : global::Unity.Entities.ICleanupComponentData, global::Latios.InternalSourceGen.StaticAPI.I").Print(
+                    componentTypeString).
                 PrintEndLine("ComponentCleanup");
                 {
                     printer.OpenScope();
                     if (writeBurst)
                     {
-                        printer.PrintBeginLine("public static unsafe global::Unity.Burst.FunctionPointer<global::Latios.InternalSourceGen.StaticAPI.BurstDispatch").Print(componentTypeString).
+                        printer.PrintBeginLine("public static unsafe global::Unity.Burst.FunctionPointer<global::Latios.InternalSourceGen.StaticAPI.BurstDispatch").Print(
+                            componentTypeString).
                         PrintEndLine("ComponentDelegate> GetBurstDispatchFunctionPtr()");
                         {
                             printer.OpenScope();
-                            printer.PrintBeginLine("return global::Unity.Burst.BurstCompiler.CompileFunctionPointer<").Print("global::Latios.InternalSourceGen.StaticAPI.BurstDispatch")
-                                .Print(componentTypeString).PrintEndLine("ComponentDelegate>(BurstDispatch);");
+                            printer.PrintBeginLine("return global::Unity.Burst.BurstCompiler.CompileFunctionPointer<").Print(
+                                "global::Latios.InternalSourceGen.StaticAPI.BurstDispatch")
+                            .Print(componentTypeString).PrintEndLine("ComponentDelegate>(BurstDispatch);");
                             printer.CloseScope();
                         }
                         printer.PrintBeginLine().PrintEndLine();
@@ -48,6 +51,8 @@ namespace LatiosFramework.SourceGen
                 printer.PrintBeginLine().PrintEndLine();
                 if (writeBurst)
                 {
+                    printer.PrintBeginLine("[global::AOT.MonoPInvokeCallback(typeof(global::Latios.InternalSourceGen.StaticAPI.BurstDispatch")
+                    .Print(componentTypeString).PrintEndLine("ComponentDelegate))]");
                     printer.PrintLine("[global::Unity.Burst.BurstCompile]");
                     printer.PrintLine("public static unsafe void BurstDispatch(void* context, int operation)");
                     {
