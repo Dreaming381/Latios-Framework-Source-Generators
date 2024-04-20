@@ -29,7 +29,7 @@ namespace LatiosFramework.SourceGen
                     printer.OpenScope();
                     if (writeBurst)
                     {
-                        printer.PrintBeginLine("public static unsafe global::Unity.Burst.FunctionPointer<global::Latios.InternalSourceGen.StaticAPI.BurstDispatch").Print(
+                        printer.PrintBeginLine("public static global::Unity.Burst.FunctionPointer<global::Latios.InternalSourceGen.StaticAPI.BurstDispatch").Print(
                             componentTypeString).
                         PrintEndLine("ComponentDelegate> GetBurstDispatchFunctionPtr()");
                         {
@@ -54,7 +54,7 @@ namespace LatiosFramework.SourceGen
                     printer.PrintBeginLine("[global::AOT.MonoPInvokeCallback(typeof(global::Latios.InternalSourceGen.StaticAPI.BurstDispatch")
                     .Print(componentTypeString).PrintEndLine("ComponentDelegate))]");
                     printer.PrintLine("[global::Unity.Burst.BurstCompile]");
-                    printer.PrintLine("public static unsafe void BurstDispatch(void* context, int operation)");
+                    printer.PrintLine("public static void BurstDispatch(global::Latios.InternalSourceGen.StaticAPI.ContextPtr context, int operation)");
                     {
                         printer.OpenScope();
                         printer.PrintBeginLine("global::Latios.InternalSourceGen.StaticAPI.BurstDispatch").Print(componentTypeString).Print("Component<").Print(
