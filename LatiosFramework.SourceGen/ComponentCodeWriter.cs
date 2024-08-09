@@ -53,6 +53,7 @@ namespace LatiosFramework.SourceGen
                 {
                     printer.PrintBeginLine("[global::AOT.MonoPInvokeCallback(typeof(global::Latios.InternalSourceGen.StaticAPI.BurstDispatch")
                     .Print(componentTypeString).PrintEndLine("ComponentDelegate))]");
+                    printer.PrintLine("[global::UnityEngine.Scripting.Preserve]");
                     printer.PrintLine("[global::Unity.Burst.BurstCompile]");
                     printer.PrintLine("public static void BurstDispatch(global::Latios.InternalSourceGen.StaticAPI.ContextPtr context, int operation)");
                     {

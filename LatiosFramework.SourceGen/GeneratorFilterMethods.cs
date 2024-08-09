@@ -19,7 +19,7 @@ namespace LatiosFramework.SourceGen
                 if (structDeclarationSyntax.BaseList == null)
                     return false;
 
-                // Has IJobEntity identifier
+                // Has interface identifier
                 var hasInterfaceNameIdentifier = false;
                 foreach (var baseType in structDeclarationSyntax.BaseList.Types)
                 {
