@@ -8,6 +8,8 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.0.1" />
     <Compile Include="..\LatiosFramework.SourceGen\UnityPrinter.cs" Link="UnityPrinter.cs" />
+    <Compile Include="..\LatiosFramework.SourceGen\GeneratorFilterMethods.cs" Link="GeneratorFilterMethods.cs" />
+    <Compile Include="..\LatiosFramework.SourceGen\UnityUtils.cs" Link="UnityUtils.cs" />
   </ItemGroup>
 
 </Project>

@@ -647,10 +647,10 @@ namespace LatiosFramework.SourceGen
             m_LeafNode = node;
         }
 
-        public SyntaxNodeScopePrinter PrintScope(SyntaxNode node)
+        public SyntaxNodeScopePrinter PrintScope(SyntaxNode node, bool printBurst)
         {
             if (node.Parent != null)
-                PrintScope(node.Parent);
+                PrintScope(node.Parent, printBurst);
 
             switch (node)
             {
@@ -661,12 +661,16 @@ namespace LatiosFramework.SourceGen
                     Printer = Printer.Print("namespace ").PrintEndLine(ns.Name.ToString()).PrintLine("{").WithIncreasedIndent();
                     break;
                 case ClassDeclarationSyntax cl:
+                    if (printBurst)
+                        Printer.PrintLine("[global::Unity.Burst.BurstCompile]");
                     Printer.PrintBeginLine();
                     foreach (var m in cl.Modifiers)
                         Printer.Print(m.ToString()).Print(" ");
                     Printer = Printer.Print("class ").PrintEndLine(cl.Identifier.Text).PrintLine("{").WithIncreasedIndent();
                     break;
                 case StructDeclarationSyntax st:
+                    if (printBurst)
+                        Printer.PrintLine("[global::Unity.Burst.BurstCompile]");
                     Printer.PrintBeginLine();
                     foreach (var m in st.Modifiers)
                         Printer.Print(m.ToString()).Print(" ");
@@ -675,7 +679,7 @@ namespace LatiosFramework.SourceGen
             }
             return this;
         }
-        public SyntaxNodeScopePrinter PrintOpen() => PrintScope(m_LeafNode);
+        public SyntaxNodeScopePrinter PrintOpen(bool printBurst) => PrintScope(m_LeafNode, printBurst);
         public SyntaxNodeScopePrinter PrintClose()
         {
             var parent = m_LeafNode;
@@ -692,6 +696,121 @@ namespace LatiosFramework.SourceGen
                 parent = parent.Parent;
             }
             return this;
+        }
+    }
+
+    /// <summary>
+    /// Printer that replicate the full scope path declaration (namespace, class and struct declarations) to a given SyntaxNode.
+    /// This version also tracks the accessibility, and allows for scoping out to just the namespace with the same accessibility
+    /// for the inclusion of an extensions method class.
+    /// </summary>
+    public struct SyntaxNodeAccessModifiedScopePrinter
+    {
+        private SyntaxNode m_LeafNode;
+        public Printer     Printer;
+        private int        nodesInsideNamespace;
+        private int        nodesOfNamespace;
+
+        public enum AccessType
+        {
+            Public,
+            Protected,
+            Internal,
+            Private
+        }
+        public AccessType mostRestrictiveAccessType;
+
+        public SyntaxNodeAccessModifiedScopePrinter(Printer printer, SyntaxNode node)
+        {
+            Printer                   = printer;
+            m_LeafNode                = node;
+            nodesInsideNamespace      = 0;
+            nodesOfNamespace          = 0;
+            mostRestrictiveAccessType = AccessType.Public;
+        }
+
+        public SyntaxNodeAccessModifiedScopePrinter PrintScope(SyntaxNode node, bool printBurst)
+        {
+            if (node.Parent != null)
+                PrintScope(node.Parent, printBurst);
+
+            switch (node)
+            {
+                case NamespaceDeclarationSyntax ns:
+                    nodesOfNamespace++;
+                    Printer.PrintBeginLine();
+                    foreach (var m in ns.Modifiers)
+                        Printer.Print(m.ToString()).Print(" ");
+                    Printer = Printer.Print("namespace ").PrintEndLine(ns.Name.ToString()).PrintLine("{").WithIncreasedIndent();
+                    break;
+                case ClassDeclarationSyntax cl:
+                    nodesInsideNamespace++;
+                    if (printBurst)
+                        Printer.PrintLine("[global::Unity.Burst.BurstCompile]");
+                    UpdateAccess(cl.Modifiers);
+                    Printer.PrintBeginLine();
+                    foreach (var m in cl.Modifiers)
+                        Printer.Print(m.ToString()).Print(" ");
+                    Printer = Printer.Print("class ").PrintEndLine(cl.Identifier.Text).PrintLine("{").WithIncreasedIndent();
+                    break;
+                case StructDeclarationSyntax st:
+                    nodesInsideNamespace++;
+                    if (printBurst)
+                        Printer.PrintLine("[global::Unity.Burst.BurstCompile]");
+                    UpdateAccess(st.Modifiers);
+                    Printer.PrintBeginLine();
+                    foreach (var m in st.Modifiers)
+                        Printer.Print(m.ToString()).Print(" ");
+                    Printer = Printer.Print("struct ").PrintEndLine(st.Identifier.Text).PrintLine("{").WithIncreasedIndent();
+                    break;
+            }
+            return this;
+        }
+        public SyntaxNodeAccessModifiedScopePrinter PrintOpen(bool printBurst) => PrintScope(m_LeafNode, printBurst);
+        public SyntaxNodeAccessModifiedScopePrinter PrintCloseInner()
+        {
+            for (int i = 0; i < nodesInsideNamespace; i++)
+            {
+                Printer = Printer.WithDecreasedIndent().PrintLine("}");
+            }
+            return this;
+        }
+        public SyntaxNodeAccessModifiedScopePrinter PrintCloseOuter()
+        {
+            for (int i = 0; i < nodesOfNamespace; i++)
+            {
+                Printer = Printer.WithDecreasedIndent().PrintLine("}");
+            }
+            return this;
+        }
+
+        void UpdateAccess(SyntaxTokenList modifiers)
+        {
+            if (mostRestrictiveAccessType == AccessType.Private)
+                return;
+
+            bool hasPublic    = false;
+            bool hasProtected = false;
+            bool hasInternal  = false;
+            bool hasPrivate   = false;
+
+            foreach (var m in modifiers)
+            {
+                if (m.IsKind(Microsoft.CodeAnalysis.CSharp.SyntaxKind.PublicKeyword))
+                    hasPublic = true;
+                if (m.IsKind(Microsoft.CodeAnalysis.CSharp.SyntaxKind.ProtectedKeyword))
+                    hasProtected = true;
+                if (m.IsKind(Microsoft.CodeAnalysis.CSharp.SyntaxKind.InternalKeyword))
+                    hasInternal = true;
+                if (m.IsKind(Microsoft.CodeAnalysis.CSharp.SyntaxKind.PrivateKeyword))
+                    hasPrivate = true;
+            }
+
+            // It seems extension methods cannot be applied to protected types.
+            if (hasPrivate || hasProtected)
+                mostRestrictiveAccessType = AccessType.Private;
+            else if (hasInternal || !hasPublic)
+                mostRestrictiveAccessType = AccessType.Internal;
         }
     }
 }

@@ -9,7 +9,7 @@ namespace LatiosFramework.SourceGen
         public static string WriteComponentCode(StructDeclarationSyntax componentSyntax, string componentTypeString, bool writeBurst = true)
         {
             var scopePrinter = new SyntaxNodeScopePrinter(Printer.DefaultLarge, componentSyntax.Parent);
-            scopePrinter.PrintOpen();
+            scopePrinter.PrintOpen(writeBurst);
             var printer = scopePrinter.Printer;
             printer.PrintLine("[global::System.Runtime.CompilerServices.CompilerGenerated]");
             if (writeBurst)

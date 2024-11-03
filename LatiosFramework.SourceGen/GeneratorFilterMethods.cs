@@ -69,6 +69,69 @@ namespace LatiosFramework.SourceGen
                     return structDeclarationSyntax;
             return null;
         }
+
+        public static bool IsSyntaxInterfaceInterfaceMatch(SyntaxNode syntaxNode, CancellationToken cancellationToken, in string interfaceName)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Is Struct
+            if (syntaxNode is InterfaceDeclarationSyntax interfaceDeclarationSyntax)
+            {
+                // Has Base List
+                if (interfaceDeclarationSyntax.BaseList == null)
+                    return false;
+
+                // Has interface identifier
+                var hasInterfaceNameIdentifier = false;
+                foreach (var baseType in interfaceDeclarationSyntax.BaseList.Types)
+                {
+                    if (baseType.Type is IdentifierNameSyntax s1)
+                    {
+                        if (s1.Identifier != null && s1.Identifier.ValueText != null && s1.Identifier.ValueText == interfaceName)
+                        {
+                            hasInterfaceNameIdentifier = true;
+                            break;
+                        }
+                    }
+                    else if (baseType.Type is QualifiedNameSyntax s2)
+                    {
+                        if (s2.Right.Identifier != null && s2.Right.Identifier.ValueText != null && s2.Right.Identifier.ValueText == interfaceName)
+                        {
+                            hasInterfaceNameIdentifier = true;
+                            break;
+                        }
+                    }
+                }
+                if (!hasInterfaceNameIdentifier)
+                    return false;
+
+                // Has Partial keyword
+                var hasPartial = false;
+                foreach (var m in interfaceDeclarationSyntax.Modifiers)
+                {
+                    if (m.IsKind(SyntaxKind.PartialKeyword))
+                    {
+                        hasPartial = true;
+                        break;
+                    }
+                }
+
+                return hasPartial;
+            }
+            return false;
+        }
+
+        public static InterfaceDeclarationSyntax GetSemanticInterfaceInterfaceMatch(GeneratorSyntaxContext ctx,
+                                                                                    CancellationToken cancellationToken,
+                                                                                    string fullSemanticInterfaceName)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var interfaceDeclarationSyntax = (InterfaceDeclarationSyntax)ctx.Node;
+            foreach (var baseTypeSyntax in interfaceDeclarationSyntax.BaseList !.Types)
+                if (ctx.SemanticModel.GetTypeInfo(baseTypeSyntax.Type).Type.ToFullName() == fullSemanticInterfaceName)
+                    return interfaceDeclarationSyntax;
+            return null;
+        }
     }
 }
 

@@ -5,7 +5,9 @@ VisualStudioVersion = 17.5.33516.290
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LatiosFramework.SourceGen", "LatiosFramework.SourceGen\LatiosFramework.SourceGen.csproj", "{2748B70C-50BE-43C3-9750-97D76D1E7FBA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SourceGenTestGrounds", "SourceGenTestGrounds\SourceGenTestGrounds.csproj", "{14B2F7AB-CA74-4E79-ABAE-1C23A89C926A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SourceGenTestGrounds", "SourceGenTestGrounds\SourceGenTestGrounds.csproj", "{14B2F7AB-CA74-4E79-ABAE-1C23A89C926A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LatiosFramework.Unika.SourceGen", "LatiosFramework.Unika.SourceGen\LatiosFramework.Unika.SourceGen.csproj", "{CAA3FDE9-8822-4829-9589-6FE30BAB9CF9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{14B2F7AB-CA74-4E79-ABAE-1C23A89C926A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{14B2F7AB-CA74-4E79-ABAE-1C23A89C926A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{14B2F7AB-CA74-4E79-ABAE-1C23A89C926A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CAA3FDE9-8822-4829-9589-6FE30BAB9CF9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CAA3FDE9-8822-4829-9589-6FE30BAB9CF9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CAA3FDE9-8822-4829-9589-6FE30BAB9CF9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CAA3FDE9-8822-4829-9589-6FE30BAB9CF9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
