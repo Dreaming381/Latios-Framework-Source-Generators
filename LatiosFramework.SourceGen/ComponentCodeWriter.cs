@@ -29,6 +29,7 @@ namespace LatiosFramework.SourceGen
                     printer.OpenScope();
                     if (writeBurst)
                     {
+                        printer.PrintLine("[global::UnityEngine.Scripting.Preserve]");
                         printer.PrintBeginLine("public static global::Unity.Burst.FunctionPointer<global::Latios.InternalSourceGen.StaticAPI.BurstDispatch").Print(
                             componentTypeString).
                         PrintEndLine("ComponentDelegate> GetBurstDispatchFunctionPtr()");
@@ -41,6 +42,7 @@ namespace LatiosFramework.SourceGen
                         }
                         printer.PrintBeginLine().PrintEndLine();
                     }
+                    printer.PrintLine("[global::UnityEngine.Scripting.Preserve]");
                     printer.PrintBeginLine("public static global::System.Type Get").Print(componentTypeString).Print("ComponentType() => typeof(").Print(
                         componentSyntax.Identifier.Text).PrintEndLine(");");
                     printer.CloseScope();
