@@ -676,6 +676,14 @@ namespace LatiosFramework.SourceGen
                         Printer.Print(m.ToString()).Print(" ");
                     Printer = Printer.Print("struct ").PrintEndLine(st.Identifier.Text).PrintLine("{").WithIncreasedIndent();
                     break;
+                case InterfaceDeclarationSyntax fa:
+                    if (printBurst)
+                        Printer.PrintLine("[global::Unity.Burst.BurstCompile]");
+                    Printer.PrintBeginLine();
+                    foreach (var m in fa.Modifiers)
+                        Printer.Print(m.ToString()).Print(" ");
+                    Printer = Printer.Print("interface ").PrintEndLine(fa.Identifier.Text).PrintLine("{").WithIncreasedIndent();
+                    break;
             }
             return this;
         }
@@ -763,6 +771,16 @@ namespace LatiosFramework.SourceGen
                         Printer.Print(m.ToString()).Print(" ");
                     Printer = Printer.Print("struct ").PrintEndLine(st.Identifier.Text).PrintLine("{").WithIncreasedIndent();
                     break;
+                case InterfaceDeclarationSyntax fa:
+                    nodesInsideNamespace++;
+                    if (printBurst)
+                        Printer.PrintLine("[global::Unity.Burst.BurstCompile]");
+                    UpdateAccess(fa.Modifiers);
+                    Printer.PrintBeginLine();
+                    foreach (var m in fa.Modifiers)
+                        Printer.Print(m.ToString()).Print(" ");
+                    Printer = Printer.Print("interface ").PrintEndLine(fa.Identifier.Text).PrintLine("{").WithIncreasedIndent();
+                    break;
             }
             return this;
         }
@@ -782,6 +800,19 @@ namespace LatiosFramework.SourceGen
                 Printer = Printer.WithDecreasedIndent().PrintLine("}");
             }
             return this;
+        }
+
+        public void AddTypeToAccess(SyntaxNode node)
+        {
+            switch (node)
+            {
+                case ClassDeclarationSyntax cl:
+                    UpdateAccess(cl.Modifiers); break;
+                case StructDeclarationSyntax st:
+                    UpdateAccess(st.Modifiers); break;
+                case InterfaceDeclarationSyntax fa:
+                    UpdateAccess(fa.Modifiers); break;
+            }
         }
 
         void UpdateAccess(SyntaxTokenList modifiers)

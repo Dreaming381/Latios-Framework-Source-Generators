@@ -46,19 +46,25 @@ namespace LatiosFramework.Unika.SourceGen
 
             var interfaceNames = new List<string>();
 
+            var allMembersOfAllInterfaces = new List<ISymbol>(interfaceTypeSymbol.GetMembers());
             foreach (var iface in interfaceTypeSymbol.AllInterfaces)
             {
                 if (iface.InheritsFromInterface("global::Latios.Unika.IUnikaInterface"))
                 {
                     interfaceNames.Add(iface.ToFullName());
                 }
+                allMembersOfAllInterfaces.AddRange(iface.GetMembers());
             }
             bodyContext.baseUnikaInterfaceNames = interfaceNames;
 
-            var methodSymbols = interfaceTypeSymbol.GetMembers()
+            var methodSymbols = allMembersOfAllInterfaces
                                 .Where(m => m.Kind == SymbolKind.Method).OfType<IMethodSymbol>()
-                                .Where(m => !m.IsStatic && m.DeclaredAccessibility != Accessibility.Private && (m.ContainingType == null || m.ContainingType.Name != nameof(
-                                                                                                                    Object)) && m.Arity == 0);
+                                .Where(m => !m.IsStatic && m.DeclaredAccessibility != Accessibility.Private &&
+                                       //m.IsVirtual && // Todo: Figure out why this doesn't work
+                                       !m.IsGenericMethod &&
+                                       !m.IsSealed &&
+                                       !m.IsOverride &&
+                                       (m.ContainingType == null || m.ContainingType.Name != nameof(Object)));
             var methods = new List<InterfaceCodeWriter.MethodDescription>();
             foreach (var methodSymbol in methodSymbols)
             {
@@ -66,6 +72,7 @@ namespace LatiosFramework.Unika.SourceGen
                 desc.methodName                            = methodSymbol.Name;
                 if (methodSymbol.ContainingType != null)
                     desc.fullExplicitInterfaceNameIfRequired = methodSymbol.ContainingType.ToFullName();
+                desc.accessibility                           = methodSymbol.DeclaredAccessibility == Accessibility.Public ? "public " : "internal ";
                 desc.arguments                               = new List<InterfaceCodeWriter.MethodDescription.Arg>();
                 foreach (var paramSymbol in methodSymbol.Parameters)
                 {
@@ -113,7 +120,7 @@ namespace LatiosFramework.Unika.SourceGen
                 else
                     previousWasEqual = true;
             }
-            if (!previousWasEqual)
+            if (!previousWasEqual && methods.Count > 0)
             {
                 var element                                 = methods[methods.Count - 1];
                 element.fullExplicitInterfaceNameIfRequired = null;

@@ -30,11 +30,12 @@ namespace LatiosFramework.Unika.SourceGen
             printer.PrintBeginLine();
             foreach (var m in scriptDeclaration.Modifiers)
                 printer.Print(m.ToString()).Print(" ");
-            printer.Print("struct ").Print(scriptDeclaration.Identifier.Text).Print(" : global::Latios.Unika.InternalSourceGen.StaticAPI.IUnikaScriptSourceGenerated");
+            printer.Print("struct ").Print(scriptDeclaration.Identifier.Text).PrintEndLine(" : global::Latios.Unika.InternalSourceGen.StaticAPI.IUnikaScriptSourceGenerated");
             printer.OpenScope();
             PrintBody(ref printer, ref bodyContext);
             printer.CloseScope();
             scopePrinter.PrintCloseInner();
+            scopePrinter.AddTypeToAccess(scriptDeclaration);
             if (scopePrinter.mostRestrictiveAccessType != SyntaxNodeAccessModifiedScopePrinter.AccessType.Private)
             {
                 extensionClassContext.modifier = scopePrinter.mostRestrictiveAccessType == SyntaxNodeAccessModifiedScopePrinter.AccessType.Public ? "public" : "internal";
@@ -82,18 +83,17 @@ namespace LatiosFramework.Unika.SourceGen
                 printer.PrintLine("[global::UnityEngine.Scripting.Preserve]");
                 printer.PrintLine("[global::Unity.Burst.BurstCompile]");
                 printer.PrintBeginLine("public static void __BurstDispatch_").Print(swapped).PrintEndLine(
-                    "global::Latios.Unika.InternalSourceGen.StaticAPI.ContextPtr context, int operation)");
+                    "(global::Latios.Unika.InternalSourceGen.StaticAPI.ContextPtr context, int operation)");
                 printer.OpenScope();
                 printer.PrintBeginLine(i).Print(".__Dispatch<").Print(context.scriptShortName).PrintEndLine(">(context, operation);");
                 printer.CloseScope();
             }
-            printer.CloseScope();
         }
 
         static void PrintExtensionClass(ref Printer printer, ref ExtensionClassContext context)
         {
             var swapped = context.scriptFullName.Replace("::", "_").Replace('.', '_');
-            printer.PrintBeginLine(context.modifier).Print(" static ").Print(swapped).PrintEndLine("_DowncastExtensions");
+            printer.PrintBeginLine(context.modifier).Print(" static class ").Print(swapped).PrintEndLine("_DowncastExtensions");
             printer.OpenScope();
             printer.PrintBeginLine("public static ").Print(context.scriptFullName).Print(".__DowncastHelper ToInterface(this global::Latios.Unika.Script<")
             .Print(context.scriptFullName).PrintEndLine("> script) => script;");

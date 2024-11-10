@@ -25,6 +25,7 @@ namespace LatiosFramework.Unika.SourceGen
 
             public string                         methodName;
             public string                         fullExplicitInterfaceNameIfRequired;
+            public string                         accessibility;
             public List<Arg>                      arguments;
             public string                         returnFullTypeNameIfNotVoid;
             public Microsoft.CodeAnalysis.RefKind returnMod;
@@ -39,7 +40,7 @@ namespace LatiosFramework.Unika.SourceGen
             printer.PrintBeginLine();
             foreach (var m in scriptDeclaration.Modifiers)
                 printer.Print(m.ToString()).Print(" ");
-            printer.Print("interface ").Print(scriptDeclaration.Identifier.Text).Print(" : global::Latios.Unika.InternalSourceGen.StaticAPI.IUnikaInterfaceSourceGenerated");
+            printer.Print("interface ").Print(scriptDeclaration.Identifier.Text).PrintEndLine(" : global::Latios.Unika.InternalSourceGen.StaticAPI.IUnikaInterfaceSourceGenerated");
             printer.OpenScope();
             PrintBody(ref printer, ref bodyContext);
             printer.CloseScope();
@@ -49,7 +50,9 @@ namespace LatiosFramework.Unika.SourceGen
 
         static void PrintBody(ref Printer printer, ref BodyContext context)
         {
-            printer.PrintBeginLine("public struct Interface : global::Latios.Unika.InternalSourceGen.StaticAPI.IInterfaceDataTyped<").Print(context.interfaceShortName).PrintEndLine(
+            string surfaceDeclaration = context.baseUnikaInterfaceNames.Count > 0 ? "new public " : "public ";
+            printer.PrintBeginLine(surfaceDeclaration).Print("struct Interface : global::Latios.Unika.InternalSourceGen.StaticAPI.IInterfaceDataTyped<").Print(
+                context.interfaceShortName).PrintEndLine(
                 ", Interface>,");
             printer.PrintBeginLine("    ").Print(context.interfaceShortName).PrintEndLine(",");
             printer.PrintLine("    global::System.IEquatable<Interface>,");
@@ -94,20 +97,20 @@ namespace LatiosFramework.Unika.SourceGen
                     printer.CloseScope();
                 }
                 printer.PrintBeginLine().PrintEndLine();
-                printer.PrintLine("public static bool operator ==(Interface lhs, Interface rhs) => (Script)lhs == (Script)rhs");
-                printer.PrintLine("public static bool operator !=(Interface lhs, Interface rhs) => (Script)lhs != (Script)rhs");
-                printer.PrintLine("public static bool operator ==(Interface lhs, InterfaceRef rhs) => (ScriptRef)lhs == (ScriptRef)rhs");
-                printer.PrintLine("public static bool operator !=(Interface lhs, InterfaceRef rhs) => (ScriptRef)lhs != (ScriptRef)rhs");
-                printer.PrintLine("public static bool operator ==(Interface lhs, Script rhs) => (Script)lhs == rhs");
-                printer.PrintLine("public static bool operator !=(Interface lhs, Script rhs) => (Script)lhs != rhs");
-                printer.PrintLine("public static bool operator ==(Interface lhs, ScriptRef rhs) => (ScriptRef)lhs == rhs");
-                printer.PrintLine("public static bool operator !=(Interface lhs, ScriptRef rhs) => (ScriptRef)lhs != rhs");
+                printer.PrintLine("public static bool operator ==(Interface lhs, Interface rhs) => (Script)lhs == (Script)rhs;");
+                printer.PrintLine("public static bool operator !=(Interface lhs, Interface rhs) => (Script)lhs != (Script)rhs;");
+                printer.PrintLine("public static bool operator ==(Interface lhs, InterfaceRef rhs) => (ScriptRef)lhs == (ScriptRef)rhs;");
+                printer.PrintLine("public static bool operator !=(Interface lhs, InterfaceRef rhs) => (ScriptRef)lhs != (ScriptRef)rhs;");
+                printer.PrintLine("public static bool operator ==(Interface lhs, Script rhs) => (Script)lhs == rhs;");
+                printer.PrintLine("public static bool operator !=(Interface lhs, Script rhs) => (Script)lhs != rhs;");
+                printer.PrintLine("public static bool operator ==(Interface lhs, ScriptRef rhs) => (ScriptRef)lhs == rhs;");
+                printer.PrintLine("public static bool operator !=(Interface lhs, ScriptRef rhs) => (ScriptRef)lhs != rhs;");
                 foreach (var b in context.baseUnikaInterfaceNames)
                 {
-                    printer.PrintBeginLine("public static bool operator ==(Interface lhs, ").Print(b).PrintEndLine(".Interface rhs) => (Script)lhs == (Script)rhs");
-                    printer.PrintBeginLine("public static bool operator !=(Interface lhs, ").Print(b).PrintEndLine(".Interface rhs) => (Script)lhs != (Script)rhs");
-                    printer.PrintBeginLine("public static bool operator ==(Interface lhs, ").Print(b).PrintEndLine(".InterfaceRef rhs) => (ScriptRef)lhs == (ScriptRef)rhs");
-                    printer.PrintBeginLine("public static bool operator !=(Interface lhs, ").Print(b).PrintEndLine(".InterfaceRef rhs) => (ScriptRef)lhs != (ScriptRef)rhs");
+                    printer.PrintBeginLine("public static bool operator ==(Interface lhs, ").Print(b).PrintEndLine(".Interface rhs) => (Script)lhs == (Script)rhs;");
+                    printer.PrintBeginLine("public static bool operator !=(Interface lhs, ").Print(b).PrintEndLine(".Interface rhs) => (Script)lhs != (Script)rhs;");
+                    printer.PrintBeginLine("public static bool operator ==(Interface lhs, ").Print(b).PrintEndLine(".InterfaceRef rhs) => (ScriptRef)lhs == (ScriptRef)rhs;");
+                    printer.PrintBeginLine("public static bool operator !=(Interface lhs, ").Print(b).PrintEndLine(".InterfaceRef rhs) => (ScriptRef)lhs != (ScriptRef)rhs;");
                 }
                 printer.PrintBeginLine().PrintEndLine();
                 printer.PrintLine("public int CompareTo(Interface other) => ((Script)this).CompareTo((Script)other);");
@@ -138,13 +141,14 @@ namespace LatiosFramework.Unika.SourceGen
                 printer.PrintBeginLine().PrintEndLine();
                 printer.PrintLine("public global::Latios.Unika.Script ToScript() => this;");
                 printer.PrintLine("global::Latios.Unika.ScriptRef global::Latios.Unika.IScriptExtensionsApi.ToRef() => this;");
-                printer.PrintLine("Interface global::Latios.Unika.InternalSourceGen.StaticAPI.IInterfaceDataTyped<IUpdate, Interface>.assign { set => this = value; }");
+                printer.PrintBeginLine("Interface global::Latios.Unika.InternalSourceGen.StaticAPI.IInterfaceDataTyped<").Print(context.interfaceShortName).PrintEndLine(
+                    ", Interface>.assign { set => this = value; }");
                 printer.PrintBeginLine().PrintEndLine();
                 PrintPack(ref printer, ref context);
                 printer.CloseScope();
             }
 
-            printer.PrintLine("public struct InterfaceRef : IInterfaceRefData,");
+            printer.PrintBeginLine(surfaceDeclaration).PrintEndLine("struct InterfaceRef : global::Latios.Unika.InternalSourceGen.StaticAPI.IInterfaceRefData,");
             printer.PrintBeginLine("    global::System.IEquatable<InterfaceRef>,");
             printer.PrintBeginLine("    global::System.IComparable<InterfaceRef>,");
             foreach (var b in context.baseUnikaInterfaceNames)
@@ -221,7 +225,8 @@ namespace LatiosFramework.Unika.SourceGen
             }
 
             printer.PrintLine("[global::UnityEngine.Scripting.Preserve]");
-            printer.PrintBeginLine("public void __Initialize() => global::Latios.Unika.InternalSourceGen.StaticAPI.InitializeInterface<").Print(context.interfaceShortName).
+            printer.PrintBeginLine(surfaceDeclaration).Print("void __Initialize() => global::Latios.Unika.InternalSourceGen.StaticAPI.InitializeInterface<").Print(
+                context.interfaceShortName).
             PrintEndLine(">();");
             printer.PrintBeginLine().PrintEndLine();
             PrintUnpack(ref printer, ref context);
@@ -234,8 +239,8 @@ namespace LatiosFramework.Unika.SourceGen
                 var  method    = context.methods[i];
                 bool hasReturn = !string.IsNullOrEmpty(method.returnFullTypeNameIfNotVoid);
                 printer.PrintLine("/// <inheritdoc />");
-                var p = hasReturn ? printer.PrintBeginLine("void") : printer.PrintBeginLine(
-                    method.returnFullTypeNameIfNotVoid);
+                var p                  = printer.PrintBeginLine(method.accessibility);
+                p                      = hasReturn ? p.Print(method.returnFullTypeNameIfNotVoid) : p.Print("void");
                 p                      = p.Print(" ");
                 p                      = string.IsNullOrEmpty(method.fullExplicitInterfaceNameIfRequired) ? p : p.Print(method.fullExplicitInterfaceNameIfRequired).Print(".");
                 p                      = p.Print(method.methodName).Print("(");
@@ -317,11 +322,12 @@ namespace LatiosFramework.Unika.SourceGen
 
         static void PrintUnpack(ref Printer printer, ref BodyContext context)
         {
-            printer.PrintLine(
-                "public static void __Dispatch<TScriptType>(global::Latios.Unika.InternalSourceGen.StaticAPI.ContextPtr context, int operation) where TScriptType : unmanaged, ")
+            string surfaceDeclaration = context.baseUnikaInterfaceNames.Count > 0 ? "new public " : "public ";
+            printer.PrintBeginLine(surfaceDeclaration).Print(
+                "static void __Dispatch<TScriptType>(global::Latios.Unika.InternalSourceGen.StaticAPI.ContextPtr __context, int __operation) where TScriptType : unmanaged, ")
             .Print(context.interfaceShortName).PrintEndLine(", global::Latios.Unika.IUnikaScript, global::Latios.Unika.InternalSourceGen.StaticAPI.IUnikaScriptSourceGenerated");
             printer.OpenScope();
-            printer.PrintLine("switch (operation)");
+            printer.PrintLine("switch (__operation)");
             printer.OpenScope();
             for (int i = 0; i < context.methods.Count; i++)
             {
@@ -330,26 +336,26 @@ namespace LatiosFramework.Unika.SourceGen
                 printer.PrintLine($"case {i}:");
                 printer.OpenScope();
 
-                printer.PrintLine("ref var script = ref global::Latios.Unika.InternalSourceGen.StaticAPI.ExtractScript<TScriptType>(context);");
+                printer.PrintLine("ref var script = ref global::Latios.Unika.InternalSourceGen.StaticAPI.ExtractScript<TScriptType>(__context);");
                 int extractCounter = 0;
                 if (hasReturn)
                 {
                     if (method.returnMod == Microsoft.CodeAnalysis.RefKind.None)
                     {
                         printer.PrintBeginLine("ref var ret = ref global::Latios.Unika.InternalSourceGen.StaticAPI.ExtractArg0<").Print(method.returnFullTypeNameIfNotVoid).
-                        PrintEndLine(">(context);");
+                        PrintEndLine(">(__context);");
                     }
                     else
                     {
                         printer.PrintLine(
-                            "ref var retPtr = ref global::Latios.Unika.InternalSourceGen.StaticAPI.ExtractArg0<global::Latios.Unika.InternalSourceGen.StaticAPI.ContextPtr>(context);");
+                            "ref var retPtr = ref global::Latios.Unika.InternalSourceGen.StaticAPI.ExtractArg0<global::Latios.Unika.InternalSourceGen.StaticAPI.ContextPtr>(__context);");
                     }
                     extractCounter++;
                 }
                 foreach (var arg in method.arguments)
                 {
                     printer.PrintBeginLine("ref var ").Print(arg.argVariableName).Print($" = ref global::Latios.Unika.InternalSourceGen.StaticAPI.ExtractArg{extractCounter}<").
-                    Print(arg.argFullTypeName).PrintEndLine(">(context);");
+                    Print(arg.argFullTypeName).PrintEndLine(">(__context);");
                     extractCounter++;
                 }
                 var p = printer.PrintBeginLine();
@@ -385,6 +391,7 @@ namespace LatiosFramework.Unika.SourceGen
                     printer.PrintLine("retPtr = global::Latios.Unika.InternalSourceGen.StaticAPI.AssignRefReturn(ref ret);");
                 else if (hasReturn && method.returnMod == Microsoft.CodeAnalysis.RefKind.RefReadOnly)
                     printer.PrintLine("retPtr = global::Latios.Unika.InternalSourceGen.StaticAPI.AssignRefReadonlyReturn(in ret);");
+                printer.PrintLine("break;");
                 printer.CloseScope();
             }
             printer.CloseScope();
