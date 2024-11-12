@@ -88,6 +88,30 @@ namespace LatiosFramework.Unika.SourceGen
                 printer.PrintBeginLine(i).Print(".__Dispatch<").Print(context.scriptShortName).PrintEndLine(">(context, operation);");
                 printer.CloseScope();
             }
+
+            printer.PrintBeginLine().PrintEndLine();
+
+            printer.PrintLine("[global::UnityEngine.Scripting.Preserve]");
+            printer.PrintLine("public static void __Initialize()");
+            {
+                printer.OpenScope();
+                printer.PrintLine(
+                    $"global::System.Span<global::Latios.Unika.InternalSourceGen.StaticAPI.ScriptInterfaceRegistrationData> registrations = stackalloc global::Latios.Unika.InternalSourceGen.StaticAPI.ScriptInterfaceRegistrationData[{context.unikaInterfaceNames.Count}];");
+                int interfaceCounter = 0;
+                foreach (var i in context.unikaInterfaceNames)
+                {
+                    var swapped = i.Replace("::", "_").Replace('.', '_');
+
+                    printer.PrintBeginLine($"registrations[{interfaceCounter}] = global::Latios.Unika.InternalSourceGen.StaticAPI.InitializeInterface<").Print(i).PrintEndLine(
+                        ">();");
+                    printer.PrintBeginLine(
+                        $"registrations[{interfaceCounter}].functionPtr = global::Unity.Burst.BurstCompiler.CompileFunctionPointer<global::Latios.Unika.InternalSourceGen.StaticAPI.BurstDispatchScriptDelegate>(__BurstDispatch_")
+                    .Print(swapped).PrintEndLine(");");
+                    interfaceCounter++;
+                }
+                printer.PrintBeginLine("global::Latios.Unika.InternalSourceGen.StaticAPI.InitializeScript<").Print(context.scriptShortName).PrintEndLine(">(registrations);");
+                printer.CloseScope();
+            }
         }
 
         static void PrintExtensionClass(ref Printer printer, ref ExtensionClassContext context)

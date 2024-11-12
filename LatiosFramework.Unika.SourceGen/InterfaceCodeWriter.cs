@@ -81,9 +81,9 @@ namespace LatiosFramework.Unika.SourceGen
                 printer.PrintLine("public bool userFlagA { get => data.userFlagA; set => data.userFlagA = value; }");
                 printer.PrintLine("public bool userFlagB { get => data.userFlagB; set => data.userFlagB = value; }");
                 printer.PrintBeginLine().PrintEndLine();
-                printer.PrintLine("public static implicit operator InterfaceRef(Interface derived) => derived.data.ToRef<InterfaceRef>();");
-                printer.PrintLine("public static implicit operator Script(Interface derived) => derived.data.ToScript();");
-                printer.PrintLine("public static implicit operator ScriptRef(Interface derived) => derived.data.ToScript();");
+                printer.PrintLine("public static implicit operator InterfaceRef(Interface derived) =>                  derived.data.ToRef<InterfaceRef>();");
+                printer.PrintLine("public static implicit operator global::Latios.Unika.Script(Interface derived) =>    derived.data.ToScript();");
+                printer.PrintLine("public static implicit operator global::Latios.Unika.ScriptRef(Interface derived) => derived.data.ToScript();");
                 foreach (var b in context.baseUnikaInterfaceNames)
                 {
                     printer.PrintBeginLine("public static implicit operator ").Print(b).PrintEndLine(".Interface(Interface derived)");
@@ -97,52 +97,65 @@ namespace LatiosFramework.Unika.SourceGen
                     printer.CloseScope();
                 }
                 printer.PrintBeginLine().PrintEndLine();
-                printer.PrintLine("public static bool operator ==(Interface lhs, Interface rhs) => (Script)lhs == (Script)rhs;");
-                printer.PrintLine("public static bool operator !=(Interface lhs, Interface rhs) => (Script)lhs != (Script)rhs;");
-                printer.PrintLine("public static bool operator ==(Interface lhs, InterfaceRef rhs) => (ScriptRef)lhs == (ScriptRef)rhs;");
-                printer.PrintLine("public static bool operator !=(Interface lhs, InterfaceRef rhs) => (ScriptRef)lhs != (ScriptRef)rhs;");
-                printer.PrintLine("public static bool operator ==(Interface lhs, Script rhs) => (Script)lhs == rhs;");
-                printer.PrintLine("public static bool operator !=(Interface lhs, Script rhs) => (Script)lhs != rhs;");
-                printer.PrintLine("public static bool operator ==(Interface lhs, ScriptRef rhs) => (ScriptRef)lhs == rhs;");
-                printer.PrintLine("public static bool operator !=(Interface lhs, ScriptRef rhs) => (ScriptRef)lhs != rhs;");
+                printer.PrintLine(
+                    "public static bool operator ==(Interface lhs, Interface rhs) =>                     (global::Latios.Unika.Script)lhs    == (global::Latios.Unika.Script)rhs;");
+                printer.PrintLine(
+                    "public static bool operator !=(Interface lhs, Interface rhs) =>                     (global::Latios.Unika.Script)lhs    != (global::Latios.Unika.Script)rhs;");
+                printer.PrintLine(
+                    "public static bool operator ==(Interface lhs, InterfaceRef rhs) =>                  (global::Latios.Unika.ScriptRef)lhs == (global::Latios.Unika.ScriptRef)rhs;");
+                printer.PrintLine(
+                    "public static bool operator !=(Interface lhs, InterfaceRef rhs) =>                  (global::Latios.Unika.ScriptRef)lhs != (global::Latios.Unika.ScriptRef)rhs;");
+                printer.PrintLine("public static bool operator ==(Interface lhs, global::Latios.Unika.Script rhs) =>    (global::Latios.Unika.Script)lhs    == rhs;");
+                printer.PrintLine("public static bool operator !=(Interface lhs, global::Latios.Unika.Script rhs) =>    (global::Latios.Unika.Script)lhs    != rhs;");
+                printer.PrintLine("public static bool operator ==(Interface lhs, global::Latios.Unika.ScriptRef rhs) => (global::Latios.Unika.ScriptRef)lhs == rhs;");
+                printer.PrintLine("public static bool operator !=(Interface lhs, global::Latios.Unika.ScriptRef rhs) => (global::Latios.Unika.ScriptRef)lhs != rhs;");
                 foreach (var b in context.baseUnikaInterfaceNames)
                 {
-                    printer.PrintBeginLine("public static bool operator ==(Interface lhs, ").Print(b).PrintEndLine(".Interface rhs) => (Script)lhs == (Script)rhs;");
-                    printer.PrintBeginLine("public static bool operator !=(Interface lhs, ").Print(b).PrintEndLine(".Interface rhs) => (Script)lhs != (Script)rhs;");
-                    printer.PrintBeginLine("public static bool operator ==(Interface lhs, ").Print(b).PrintEndLine(".InterfaceRef rhs) => (ScriptRef)lhs == (ScriptRef)rhs;");
-                    printer.PrintBeginLine("public static bool operator !=(Interface lhs, ").Print(b).PrintEndLine(".InterfaceRef rhs) => (ScriptRef)lhs != (ScriptRef)rhs;");
+                    printer.PrintBeginLine("public static bool operator ==(Interface lhs, ").Print(b).PrintEndLine(
+                        ".Interface rhs) =>    (global::Latios.Unika.Script)lhs ==    (global::Latios.Unika.Script)rhs;");
+                    printer.PrintBeginLine("public static bool operator !=(Interface lhs, ").Print(b).PrintEndLine(
+                        ".Interface rhs) =>    (global::Latios.Unika.Script)lhs !=    (global::Latios.Unika.Script)rhs;");
+                    printer.PrintBeginLine("public static bool operator ==(Interface lhs, ").Print(b).PrintEndLine(
+                        ".InterfaceRef rhs) => (global::Latios.Unika.ScriptRef)lhs == (global::Latios.Unika.ScriptRef)rhs;");
+                    printer.PrintBeginLine("public static bool operator !=(Interface lhs, ").Print(b).PrintEndLine(
+                        ".InterfaceRef rhs) => (global::Latios.Unika.ScriptRef)lhs != (global::Latios.Unika.ScriptRef)rhs;");
                 }
                 printer.PrintBeginLine().PrintEndLine();
-                printer.PrintLine("public int CompareTo(Interface other) => ((Script)this).CompareTo((Script)other);");
-                printer.PrintLine("public int CompareTo(InterfaceRef other) => ((ScriptRef)this).CompareTo((ScriptRef)other);");
-                printer.PrintLine("public int CompareTo(Script other) => ((Script)this).CompareTo(other);");
-                printer.PrintLine("public int CompareTo(ScriptRef other) => ((ScriptRef)this).CompareTo(other);");
+                printer.PrintLine("public int CompareTo(Interface other) =>                      ((global::Latios.Unika.Script)this).CompareTo((global::Latios.Unika.Script)other);");
+                printer.PrintLine(
+                    "public int CompareTo(InterfaceRef other) =>                   ((global::Latios.Unika.ScriptRef)this).CompareTo((global::Latios.Unika.ScriptRef)other);");
+                printer.PrintLine("public int CompareTo(global::Latios.Unika.Script other) =>    ((global::Latios.Unika.Script)this).CompareTo(other);");
+                printer.PrintLine("public int CompareTo(global::Latios.Unika.ScriptRef other) => ((global::Latios.Unika.ScriptRef)this).CompareTo(other);");
                 foreach (var b in context.baseUnikaInterfaceNames)
                 {
-                    printer.PrintBeginLine("public int CompareTo(").Print(b).PrintEndLine(".Interface other) => ((Script)this).CompareTo((Script)other);");
-                    printer.PrintBeginLine("public int CompareTo(").Print(b).PrintEndLine(".InterfaceRef other) => ((ScriptRef)this).CompareTo((ScriptRef)other);");
+                    printer.PrintBeginLine("public int CompareTo(").Print(b).PrintEndLine(
+                        ".Interface other) =>    ((global::Latios.Unika.Script)this).CompareTo((global::Latios.Unika.Script)other);");
+                    printer.PrintBeginLine("public int CompareTo(").Print(b).PrintEndLine(
+                        ".InterfaceRef other) => ((global::Latios.Unika.ScriptRef)this).CompareTo((global::Latios.Unika.ScriptRef)other);");
                 }
                 printer.PrintBeginLine().PrintEndLine();
-                printer.PrintLine("public bool Equals(Interface other) => ((Script)this).Equals((Script)other);");
-                printer.PrintLine("public bool Equals(InterfaceRef other) => ((ScriptRef)this).Equals((ScriptRef)other);");
-                printer.PrintLine("public bool Equals(Script other) => ((Script)this).Equals(other);");
-                printer.PrintLine("public bool Equals(ScriptRef other) => ((ScriptRef)this).Equals(other);");
+                printer.PrintLine("public bool Equals(Interface other) =>                     ((global::Latios.Unika.Script)this).Equals((global::Latios.Unika.Script)other);");
+                printer.PrintLine("public bool Equals(InterfaceRef other) =>                  ((global::Latios.Unika.ScriptRef)this).Equals((global::Latios.Unika.ScriptRef)other);");
+                printer.PrintLine("public bool Equals(global::Latios.Unika.Script other) =>    ((global::Latios.Unika.Script)this).Equals(other);");
+                printer.PrintLine("public bool Equals(global::Latios.Unika.ScriptRef other) => ((global::Latios.Unika.ScriptRef)this).Equals(other);");
                 foreach (var b in context.baseUnikaInterfaceNames)
                 {
-                    printer.PrintBeginLine("public bool Equals(").Print(b).PrintEndLine(".Interface other) => ((Script)this).Equals((Script)other);");
-                    printer.PrintBeginLine("public bool Equals(").Print(b).PrintEndLine(".InterfaceRef other) => ((ScriptRef)this).Equals((ScriptRef)other);");
+                    printer.PrintBeginLine("public bool Equals(").Print(b).PrintEndLine(
+                        ".Interface other) =>    ((global::Latios.Unika.Script)this).Equals((global::Latios.Unika.Script)other);");
+                    printer.PrintBeginLine("public bool Equals(").Print(b).PrintEndLine(
+                        ".InterfaceRef other) => ((global::Latios.Unika.ScriptRef)this).Equals((global::Latios.Unika.ScriptRef)other);");
                 }
                 printer.PrintBeginLine().PrintEndLine();
-                printer.PrintLine("public override bool Equals(object obj) => ((Script)this).Equals(obj);");
-                printer.PrintLine("public override int GetHashCode() => ((Script)this).GetHashCode();");
-                printer.PrintLine("public override string ToString() => ((Script)this).ToString();");
-                printer.PrintLine("public global::Unity.Collections.FixedString128Bytes ToFixedString() => ((Script)this).ToFixedString();");
-                printer.PrintLine("public static Interface Null => default;");
+                printer.PrintLine("public override bool Equals(object obj) =>                              ((global::Latios.Unika.Script)this).Equals(obj);");
+                printer.PrintLine("public override int GetHashCode() =>                                    ((global::Latios.Unika.Script)this).GetHashCode();");
+                printer.PrintLine("public override string ToString() =>                                    ((global::Latios.Unika.Script)this).ToString();");
+                printer.PrintLine("public global::Unity.Collections.FixedString128Bytes ToFixedString() => ((global::Latios.Unika.Script)this).ToFixedString();");
+                printer.PrintLine("public static Interface Null =>                                         default;");
                 printer.PrintBeginLine().PrintEndLine();
                 printer.PrintLine("public global::Latios.Unika.Script ToScript() => this;");
                 printer.PrintLine("global::Latios.Unika.ScriptRef global::Latios.Unika.IScriptExtensionsApi.ToRef() => this;");
                 printer.PrintBeginLine("Interface global::Latios.Unika.InternalSourceGen.StaticAPI.IInterfaceDataTyped<").Print(context.interfaceShortName).PrintEndLine(
-                    ", Interface>.assign { set => this = value; }");
+                    ", Interface>.assign { set => this.data = value.data; }");
                 printer.PrintBeginLine().PrintEndLine();
                 PrintPack(ref printer, ref context);
                 printer.CloseScope();
@@ -181,7 +194,7 @@ namespace LatiosFramework.Unika.SourceGen
                 printer.OpenScope();
                 printer.PrintLine("return global::Latios.Unika.InternalSourceGen.StaticAPI.Resolve<Interface, TResolver>(ref data, ref resolver);");
                 printer.CloseScope();
-                printer.PrintLine("public static implicit operator ScriptRef(InterfaceRef derived) => derived.data.ToScriptRef();");
+                printer.PrintLine("public static implicit operator global::Latios.Unika.ScriptRef(InterfaceRef derived) => derived.data.ToScriptRef();");
                 foreach (var b in context.baseUnikaInterfaceNames)
                 {
                     printer.PrintBeginLine("public static implicit operator ").Print(b).PrintEndLine(".InterfaceRef(InterfaceRef derived)");
@@ -190,42 +203,49 @@ namespace LatiosFramework.Unika.SourceGen
                     printer.CloseScope();
                 }
                 printer.PrintBeginLine().PrintEndLine();
-                printer.PrintLine("public static bool operator ==(InterfaceRef lhs, InterfaceRef rhs) => (ScriptRef)lhs == (ScriptRef)rhs;");
-                printer.PrintLine("public static bool operator !=(InterfaceRef lhs, InterfaceRef rhs) => (ScriptRef)lhs != (ScriptRef)rhs;");
-                printer.PrintLine("public static bool operator ==(InterfaceRef lhs, ScriptRef rhs) => (ScriptRef)lhs == rhs;");
-                printer.PrintLine("public static bool operator !=(InterfaceRef lhs, ScriptRef rhs) => (ScriptRef)lhs != rhs;");
+                printer.PrintLine(
+                    "public static bool operator ==(InterfaceRef lhs, InterfaceRef rhs) =>                  (global::Latios.Unika.ScriptRef)lhs == (global::Latios.Unika.ScriptRef)rhs;");
+                printer.PrintLine(
+                    "public static bool operator !=(InterfaceRef lhs, InterfaceRef rhs) =>                  (global::Latios.Unika.ScriptRef)lhs != (global::Latios.Unika.ScriptRef)rhs;");
+                printer.PrintLine("public static bool operator ==(InterfaceRef lhs, global::Latios.Unika.ScriptRef rhs) => (global::Latios.Unika.ScriptRef)lhs == rhs;");
+                printer.PrintLine("public static bool operator !=(InterfaceRef lhs, global::Latios.Unika.ScriptRef rhs) => (global::Latios.Unika.ScriptRef)lhs != rhs;");
                 foreach (var b in context.baseUnikaInterfaceNames)
                 {
-                    printer.PrintBeginLine("public static bool operator ==(InterfaceRef lhs, ").Print(b).PrintEndLine(".InterfaceRef rhs) => (ScriptRef)lhs == (ScriptRef)rhs;");
-                    printer.PrintBeginLine("public static bool operator !=(InterfaceRef lhs, ").Print(b).PrintEndLine(".InterfaceRef rhs) => (ScriptRef)lhs != (ScriptRef)rhs;");
+                    printer.PrintBeginLine("public static bool operator ==(InterfaceRef lhs, ").Print(b).PrintEndLine(
+                        ".InterfaceRef rhs) => (global::Latios.Unika.ScriptRef)lhs == (global::Latios.Unika.ScriptRef)rhs;");
+                    printer.PrintBeginLine("public static bool operator !=(InterfaceRef lhs, ").Print(b).PrintEndLine(
+                        ".InterfaceRef rhs) => (global::Latios.Unika.ScriptRef)lhs != (global::Latios.Unika.ScriptRef)rhs;");
                 }
                 printer.PrintBeginLine().PrintEndLine();
-                printer.PrintLine("public int CompareTo(InterfaceRef other) => ((ScriptRef)this).CompareTo((ScriptRef)other);");
-                printer.PrintLine("public int CompareTo(ScriptRef other) => ((ScriptRef)this).CompareTo(other);");
+                printer.PrintLine(
+                    "public int CompareTo(InterfaceRef other) =>                  ((global::Latios.Unika.ScriptRef)this).CompareTo((global::Latios.Unika.ScriptRef)other);");
+                printer.PrintLine("public int CompareTo(global::Latios.Unika.ScriptRef other) => ((global::Latios.Unika.ScriptRef)this).CompareTo(other);");
                 foreach (var b in context.baseUnikaInterfaceNames)
                 {
-                    printer.PrintBeginLine("public int CompareTo(").Print(b).PrintEndLine(".InterfaceRef other) => ((ScriptRef)this).CompareTo((ScriptRef)other);");
+                    printer.PrintBeginLine("public int CompareTo(").Print(b).PrintEndLine(
+                        ".InterfaceRef other) => ((global::Latios.Unika.ScriptRef)this).CompareTo((global::Latios.Unika.ScriptRef)other);");
                 }
                 printer.PrintBeginLine().PrintEndLine();
-                printer.PrintLine("public bool Equals(InterfaceRef other) => ((ScriptRef)this).Equals((ScriptRef)other);");
-                printer.PrintLine("public bool Equals(ScriptRef other) => ((ScriptRef)this).Equals(other);");
+                printer.PrintLine("public bool Equals(InterfaceRef other) =>                  ((global::Latios.Unika.ScriptRef)this).Equals((global::Latios.Unika.ScriptRef)other);");
+                printer.PrintLine("public bool Equals(global::Latios.Unika.ScriptRef other) => ((global::Latios.Unika.ScriptRef)this).Equals(other);");
                 foreach (var b in context.baseUnikaInterfaceNames)
                 {
-                    printer.PrintBeginLine("public bool Equals(").Print(b).PrintEndLine(".InterfaceRef other) => ((ScriptRef)this).Equals((ScriptRef)other);");
+                    printer.PrintBeginLine("public bool Equals(").Print(b).PrintEndLine(
+                        ".InterfaceRef other) => ((global::Latios.Unika.ScriptRef)this).Equals((global::Latios.Unika.ScriptRef)other);");
                 }
                 printer.PrintBeginLine().PrintEndLine();
-                printer.PrintLine("public override bool Equals(object obj) => ((ScriptRef)this).Equals(obj);");
-                printer.PrintLine("public override int GetHashCode() => ((ScriptRef)this).GetHashCode();");
-                printer.PrintLine("public override string ToString() => ((ScriptRef)this).ToString();");
-                printer.PrintLine("public global::Unity.Collections.FixedString128Bytes ToFixedString() => ((ScriptRef)this).ToFixedString();");
-                printer.PrintLine("public static InterfaceRef Null => default;");
+                printer.PrintLine("public override bool Equals(object obj) =>                              ((global::Latios.Unika.ScriptRef)this).Equals(obj);");
+                printer.PrintLine("public override int GetHashCode() =>                                    ((global::Latios.Unika.ScriptRef)this).GetHashCode();");
+                printer.PrintLine("public override string ToString() =>                                    ((global::Latios.Unika.ScriptRef)this).ToString();");
+                printer.PrintLine("public global::Unity.Collections.FixedString128Bytes ToFixedString() => ((global::Latios.Unika.ScriptRef)this).ToFixedString();");
+                printer.PrintLine("public static InterfaceRef Null =>                                      default;");
                 printer.PrintBeginLine().PrintEndLine();
 
                 printer.CloseScope();
             }
 
             printer.PrintLine("[global::UnityEngine.Scripting.Preserve]");
-            printer.PrintBeginLine(surfaceDeclaration).Print("void __Initialize() => global::Latios.Unika.InternalSourceGen.StaticAPI.InitializeInterface<").Print(
+            printer.PrintBeginLine(surfaceDeclaration).Print("static void __Initialize() => global::Latios.Unika.InternalSourceGen.StaticAPI.InitializeInterface<").Print(
                 context.interfaceShortName).
             PrintEndLine(">();");
             printer.PrintBeginLine().PrintEndLine();
