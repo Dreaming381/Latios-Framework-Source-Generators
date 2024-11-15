@@ -162,8 +162,8 @@ namespace LatiosFramework.Unika.SourceGen
             }
 
             printer.PrintBeginLine(surfaceDeclaration).PrintEndLine("struct InterfaceRef : global::Latios.Unika.InternalSourceGen.StaticAPI.IInterfaceRefData,");
-            printer.PrintBeginLine("    global::System.IEquatable<InterfaceRef>,");
-            printer.PrintBeginLine("    global::System.IComparable<InterfaceRef>,");
+            printer.PrintLine("    global::System.IEquatable<InterfaceRef>,");
+            printer.PrintLine("    global::System.IComparable<InterfaceRef>,");
             foreach (var b in context.baseUnikaInterfaceNames)
             {
                 printer.PrintBeginLine("    global::System.IEquatable<").Print(b).PrintEndLine(".InterfaceRef>,");
@@ -310,7 +310,7 @@ namespace LatiosFramework.Unika.SourceGen
                     if (hasReturn)
                     {
                         if (method.returnMod == Microsoft.CodeAnalysis.RefKind.None)
-                            printer.PrintBeginLine(method.returnFullTypeNameIfNotVoid).PrintEndLine(" ret = default");
+                            printer.PrintBeginLine(method.returnFullTypeNameIfNotVoid).PrintEndLine(" ret = default;");
                         else
                             printer.PrintLine("global::Latios.Unika.InternalSourceGen.StaticAPI.ContextPtr ret = default;");
                     }

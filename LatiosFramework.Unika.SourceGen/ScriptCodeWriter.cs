@@ -48,8 +48,9 @@ namespace LatiosFramework.Unika.SourceGen
 
         static void PrintBody(ref Printer printer, ref BodyContext context)
         {
-            printer.PrintLine("public struct __DowncastHelper");
+            if (context.unikaInterfaceNames.Count > 0)
             {
+                printer.PrintLine("public struct __DowncastHelper");
                 printer.OpenScope();
                 printer.PrintBeginLine("global::Latios.Unika.Script<").Print(context.scriptShortName).PrintEndLine("> m_script;");
                 printer.PrintBeginLine().PrintEndLine();
@@ -72,8 +73,8 @@ namespace LatiosFramework.Unika.SourceGen
                     printer.CloseScope();
                 }
                 printer.CloseScope();
+                printer.PrintBeginLine().PrintEndLine();
             }
-            printer.PrintBeginLine().PrintEndLine();
 
             foreach (var i in context.unikaInterfaceNames)
             {
@@ -116,6 +117,8 @@ namespace LatiosFramework.Unika.SourceGen
 
         static void PrintExtensionClass(ref Printer printer, ref ExtensionClassContext context)
         {
+            if (context.unikaInterfaceNames.Count == 0)
+                return;
             var swapped = context.scriptFullName.Replace("::", "_").Replace('.', '_');
             printer.PrintBeginLine(context.modifier).Print(" static class ").Print(swapped).PrintEndLine("_DowncastExtensions");
             printer.OpenScope();
