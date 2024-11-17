@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "LatiosFramework.SourceGen": {
+      "commandName": "Project"
+    },
+    "LatiosFramework.Unika.SourceGen": {
+      "commandName": "Project"
+    }
+  }
+}

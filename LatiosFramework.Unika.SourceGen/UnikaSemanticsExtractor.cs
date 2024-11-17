@@ -129,6 +129,26 @@ namespace LatiosFramework.Unika.SourceGen
             bodyContext.methods = methods;
         }
 
+        public static void ExtractAuthoringSemantics(ClassDeclarationSyntax classDeclarationSyntax,
+                                                     SemanticModel semanticModel,
+                                                     out AuthoringCodeWriter.Context context)
+        {
+            var classDeclarationSymbol      = semanticModel.GetDeclaredSymbol(classDeclarationSyntax);
+            var classTypeSymbol             = classDeclarationSymbol.GetSymbolType();
+            var genericAuthoringType        = classTypeSymbol.BaseType;
+            var scriptType                  = genericAuthoringType.TypeArguments[0];
+            context.scriptTypeName          = scriptType.ToFullName();
+            context.baseUnikaInterfaceNames = new List<string>();
+
+            foreach (var iface in scriptType.AllInterfaces)
+            {
+                if (iface.InheritsFromInterface("global::Latios.Unika.IUnikaInterface"))
+                {
+                    context.baseUnikaInterfaceNames.Add(iface.ToFullName());
+                }
+            }
+        }
+
         struct MethodComparer : IComparer<InterfaceCodeWriter.MethodDescription>
         {
             public int Compare(InterfaceCodeWriter.MethodDescription x, InterfaceCodeWriter.MethodDescription y)

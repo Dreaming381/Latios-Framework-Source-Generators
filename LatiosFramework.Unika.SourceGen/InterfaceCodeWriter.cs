@@ -240,6 +240,8 @@ namespace LatiosFramework.Unika.SourceGen
                 printer.PrintLine("public global::Unity.Collections.FixedString128Bytes ToFixedString() => ((global::Latios.Unika.ScriptRef)this).ToFixedString();");
                 printer.PrintLine("public static InterfaceRef Null =>                                      default;");
                 printer.PrintBeginLine().PrintEndLine();
+                printer.PrintLine("global::Latios.Unika.ScriptRef global::Latios.Unika.IScriptRefTypedExtensionsApi.ToScriptRef() => this;");
+                printer.PrintBeginLine().PrintEndLine();
 
                 printer.CloseScope();
             }

@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "LatiosFramework.Unika.SourceGen": {
+      "commandName": "DebugRoslynComponent",
+      "targetProject": "../SourceGenTestGrounds/SourceGenTestGrounds.csproj"
+    }
+  }
+}
