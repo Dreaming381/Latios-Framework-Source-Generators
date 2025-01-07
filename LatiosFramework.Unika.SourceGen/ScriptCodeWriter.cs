@@ -74,6 +74,25 @@ namespace LatiosFramework.Unika.SourceGen
                 }
                 printer.CloseScope();
                 printer.PrintBeginLine().PrintEndLine();
+
+                printer.PrintLine("public struct __DowncastRefHelper");
+                printer.OpenScope();
+                printer.PrintBeginLine("global::Latios.Unika.ScriptRef<").Print(context.scriptShortName).PrintEndLine("> m_scriptRef;");
+                printer.PrintBeginLine().PrintEndLine();
+                printer.PrintBeginLine("public static implicit operator __DowncastRefHelper(global::Latios.Unika.ScriptRef<").Print(context.scriptShortName)
+                .PrintEndLine("> scriptRef) => new __DowncastRefHelper { m_scriptRef = scriptRef };");
+
+                foreach (var i in context.unikaInterfaceNames)
+                {
+                    printer.PrintBeginLine("public static implicit operator ").Print(i).PrintEndLine(".InterfaceRef(__DowncastRefHelper helper)");
+                    printer.OpenScope();
+                    printer.PrintLine("global::Latios.Unika.ScriptRef scriptRef = helper.m_scriptRef;");
+                    printer.PrintBeginLine("return global::Unity.Collections.LowLevel.Unsafe.UnsafeUtility.As<global::Latios.Unika.ScriptRef,").Print(i)
+                    .Print(".InterfaceRef>(ref scriptRef);");
+                    printer.CloseScope();
+                }
+                printer.CloseScope();
+                printer.PrintBeginLine().PrintEndLine();
             }
 
             foreach (var i in context.unikaInterfaceNames)
@@ -124,6 +143,8 @@ namespace LatiosFramework.Unika.SourceGen
             printer.OpenScope();
             printer.PrintBeginLine("public static ").Print(context.scriptFullName).Print(".__DowncastHelper ToInterface(this global::Latios.Unika.Script<")
             .Print(context.scriptFullName).PrintEndLine("> script) => script;");
+            printer.PrintBeginLine("public static ").Print(context.scriptFullName).Print(".__DowncastRefHelper ToInterface(this global::Latios.Unika.ScriptRef<")
+            .Print(context.scriptFullName).PrintEndLine("> scriptRef) => scriptRef;");
             printer.CloseScope();
         }
     }
