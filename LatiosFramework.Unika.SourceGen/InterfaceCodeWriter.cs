@@ -72,28 +72,28 @@ namespace LatiosFramework.Unika.SourceGen
             printer.PrintLine("    global::System.IComparable<global::Latios.Unika.ScriptRef>");
             {
                 printer.OpenScope();
-                printer.PrintLine("global::Latios.Unika.InternalSourceGen.StaticAPI.InterfaceData data;");
+                printer.PrintLine("global::Latios.Unika.InternalSourceGen.StaticAPI.InterfaceData __data;");
                 printer.PrintBeginLine().PrintEndLine();
-                printer.PrintLine("public global::Unity.Entities.Entity entity => data.entity;");
-                printer.PrintLine("public global::Latios.Unika.EntityScriptCollection allScripts => data.allScripts;");
-                printer.PrintLine("public int indexInEntity => data.indexInEntity;");
-                printer.PrintLine("public byte userByte { get => data.userByte; set => data.userByte = value; }");
-                printer.PrintLine("public bool userFlagA { get => data.userFlagA; set => data.userFlagA = value; }");
-                printer.PrintLine("public bool userFlagB { get => data.userFlagB; set => data.userFlagB = value; }");
+                printer.PrintLine("public global::Unity.Entities.Entity entity => __data.entity;");
+                printer.PrintLine("public global::Latios.Unika.EntityScriptCollection allScripts => __data.allScripts;");
+                printer.PrintLine("public int indexInEntity => __data.indexInEntity;");
+                printer.PrintLine("public byte userByte { get => __data.userByte; set => __data.userByte = value; }");
+                printer.PrintLine("public bool userFlagA { get => __data.userFlagA; set => __data.userFlagA = value; }");
+                printer.PrintLine("public bool userFlagB { get => __data.userFlagB; set => __data.userFlagB = value; }");
                 printer.PrintBeginLine().PrintEndLine();
-                printer.PrintLine("public static implicit operator InterfaceRef(Interface derived) =>                  derived.data.ToRef<InterfaceRef>();");
-                printer.PrintLine("public static implicit operator global::Latios.Unika.Script(Interface derived) =>    derived.data.ToScript();");
-                printer.PrintLine("public static implicit operator global::Latios.Unika.ScriptRef(Interface derived) => derived.data.ToScript();");
+                printer.PrintLine("public static implicit operator InterfaceRef(Interface derived) =>                  derived.__data.ToRef<InterfaceRef>();");
+                printer.PrintLine("public static implicit operator global::Latios.Unika.Script(Interface derived) =>    derived.__data.ToScript();");
+                printer.PrintLine("public static implicit operator global::Latios.Unika.ScriptRef(Interface derived) => derived.__data.ToScript();");
                 foreach (var b in context.baseUnikaInterfaceNames)
                 {
                     printer.PrintBeginLine("public static implicit operator ").Print(b).PrintEndLine(".Interface(Interface derived)");
                     printer.OpenScope();
                     printer.PrintBeginLine("return global::Latios.Unika.InternalSourceGen.StaticAPI.DownCast<").Print(b).Print(".Interface, ").Print(b).PrintEndLine(
-                        ">(derived.data);");
+                        ">(derived.__data);");
                     printer.CloseScope();
                     printer.PrintBeginLine("public static implicit operator ").Print(b).PrintEndLine(".InterfaceRef(Interface derived)");
                     printer.OpenScope();
-                    printer.PrintBeginLine("return derived.data.ToRef<").Print(b).PrintEndLine(".InterfaceRef>();");
+                    printer.PrintBeginLine("return derived.__data.ToRef<").Print(b).PrintEndLine(".InterfaceRef>();");
                     printer.CloseScope();
                 }
                 printer.PrintBeginLine().PrintEndLine();
@@ -155,7 +155,7 @@ namespace LatiosFramework.Unika.SourceGen
                 printer.PrintLine("public global::Latios.Unika.Script ToScript() => this;");
                 printer.PrintLine("global::Latios.Unika.ScriptRef global::Latios.Unika.IScriptExtensionsApi.ToRef() => this;");
                 printer.PrintBeginLine("Interface global::Latios.Unika.InternalSourceGen.StaticAPI.IInterfaceDataTyped<").Print(context.interfaceShortName).PrintEndLine(
-                    ", Interface>.assign { set => this.data = value.data; }");
+                    ", Interface>.assign { set => this.__data = value.__data; }");
                 printer.PrintBeginLine().PrintEndLine();
                 PrintPack(ref printer, ref context);
                 printer.CloseScope();
@@ -173,28 +173,28 @@ namespace LatiosFramework.Unika.SourceGen
             printer.PrintLine("    global::System.IComparable<global::Latios.Unika.ScriptRef>");
             {
                 printer.OpenScope();
-                printer.PrintLine("global::Latios.Unika.InternalSourceGen.StaticAPI.InterfaceRefData data;");
+                printer.PrintLine("global::Latios.Unika.InternalSourceGen.StaticAPI.InterfaceRefData __data;");
                 printer.PrintBeginLine().PrintEndLine();
-                printer.PrintLine("public global::Unity.Entities.Entity entity => data.entity;");
+                printer.PrintLine("public global::Unity.Entities.Entity entity => __data.entity;");
                 printer.PrintBeginLine().PrintEndLine();
                 printer.PrintLine("public bool TryResolve(in global::Latios.Unika.EntityScriptCollection allScripts, out Interface script)");
                 printer.OpenScope();
-                printer.PrintLine("return global::Latios.Unika.InternalSourceGen.StaticAPI.TryResolve<Interface>(ref data, in allScripts, out script);");
+                printer.PrintLine("return global::Latios.Unika.InternalSourceGen.StaticAPI.TryResolve<Interface>(ref __data, in allScripts, out script);");
                 printer.CloseScope();
                 printer.PrintLine(
                     "public bool TryResolve<TResolver>(ref TResolver resolver, out Interface script) where TResolver : unmanaged, global::Latios.Unika.IScriptResolverBase");
                 printer.OpenScope();
-                printer.PrintLine("return global::Latios.Unika.InternalSourceGen.StaticAPI.TryResolve<Interface, TResolver>(ref data, ref resolver, out script);");
+                printer.PrintLine("return global::Latios.Unika.InternalSourceGen.StaticAPI.TryResolve<Interface, TResolver>(ref __data, ref resolver, out script);");
                 printer.CloseScope();
                 printer.PrintLine("public Interface Resolve(in global::Latios.Unika.EntityScriptCollection allScripts)");
                 printer.OpenScope();
-                printer.PrintLine("return global::Latios.Unika.InternalSourceGen.StaticAPI.Resolve<Interface>(ref data, in allScripts);");
+                printer.PrintLine("return global::Latios.Unika.InternalSourceGen.StaticAPI.Resolve<Interface>(ref __data, in allScripts);");
                 printer.CloseScope();
                 printer.PrintLine("public Interface Resolve<TResolver>(ref TResolver resolver) where TResolver : unmanaged, global::Latios.Unika.IScriptResolverBase");
                 printer.OpenScope();
-                printer.PrintLine("return global::Latios.Unika.InternalSourceGen.StaticAPI.Resolve<Interface, TResolver>(ref data, ref resolver);");
+                printer.PrintLine("return global::Latios.Unika.InternalSourceGen.StaticAPI.Resolve<Interface, TResolver>(ref __data, ref resolver);");
                 printer.CloseScope();
-                printer.PrintLine("public static implicit operator global::Latios.Unika.ScriptRef(InterfaceRef derived) => derived.data.ToScriptRef();");
+                printer.PrintLine("public static implicit operator global::Latios.Unika.ScriptRef(InterfaceRef derived) => derived.__data.ToScriptRef();");
                 foreach (var b in context.baseUnikaInterfaceNames)
                 {
                     printer.PrintBeginLine("public static implicit operator ").Print(b).PrintEndLine(".InterfaceRef(InterfaceRef derived)");
@@ -316,7 +316,7 @@ namespace LatiosFramework.Unika.SourceGen
                         else
                             printer.PrintLine("global::Latios.Unika.InternalSourceGen.StaticAPI.ContextPtr ret = default;");
                     }
-                    p = printer.PrintBeginLine($"global::Latios.Unika.InternalSourceGen.StaticAPI.Dispatch(ref data, {i}");
+                    p = printer.PrintBeginLine($"global::Latios.Unika.InternalSourceGen.StaticAPI.Dispatch(ref __data, {i}");
                     if (hasReturn)
                         p.Print(", ref ret");
                     argCounter = 0;
