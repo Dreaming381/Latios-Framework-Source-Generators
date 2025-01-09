@@ -9,9 +9,13 @@ namespace LatiosFramework.Unika.SourceGen
     {
         public struct BodyContext
         {
-            public string                  interfaceShortName;
-            public List<string>            baseUnikaInterfaceNames;
-            public List<MethodDescription> methods;
+            public string                    interfaceShortName;
+            public List<string>              baseUnikaInterfaceNames;
+            public List<MethodDescription>   methods;
+            public List<PropertyDescription> properties;
+            public List<IndexerDescription>  indexers;
+            public int                       propertyOpCount;
+            public int                       indexerOpCount;
         }
 
         public struct MethodDescription
@@ -29,6 +33,34 @@ namespace LatiosFramework.Unika.SourceGen
             public List<Arg>                      arguments;
             public string                         returnFullTypeNameIfNotVoid;
             public Microsoft.CodeAnalysis.RefKind returnMod;
+        }
+
+        public struct PropertyDescription
+        {
+            public string                         propertyName;
+            public string                         fullExplicitInterfaceNameIfRequired;
+            public string                         accessibility;
+            public string                         propertyFullTypeName;
+            public Microsoft.CodeAnalysis.RefKind returnMod;
+            public bool                           hasGetter;
+            public bool                           hasSetter;
+        }
+
+        public struct IndexerDescription
+        {
+            public struct Arg
+            {
+                public string argFullTypeName;
+                public string argVariableName;
+            }
+
+            public string                         fullExplicitInterfaceNameIfRequired;
+            public string                         accessibility;
+            public string                         propertyFullTypeName;
+            public List<Arg>                      arguments;
+            public Microsoft.CodeAnalysis.RefKind returnMod;
+            public bool                           hasGetter;
+            public bool                           hasSetter;
         }
 
         public static string WriteInterfaceCode(InterfaceDeclarationSyntax scriptDeclaration, ref BodyContext bodyContext)
@@ -261,7 +293,11 @@ namespace LatiosFramework.Unika.SourceGen
                 var  method    = context.methods[i];
                 bool hasReturn = !string.IsNullOrEmpty(method.returnFullTypeNameIfNotVoid);
                 printer.PrintLine("/// <inheritdoc />");
-                var p                  = printer.PrintBeginLine(method.accessibility);
+                var p = printer.PrintBeginLine(method.accessibility);
+                if (method.returnMod == Microsoft.CodeAnalysis.RefKind.Ref)
+                    p = printer.Print("ref ");
+                else if (method.returnMod == Microsoft.CodeAnalysis.RefKind.RefReadOnly)
+                    p                  = printer.Print("ref readonly ");
                 p                      = hasReturn ? p.Print(method.returnFullTypeNameIfNotVoid) : p.Print("void");
                 p                      = p.Print(" ");
                 p                      = string.IsNullOrEmpty(method.fullExplicitInterfaceNameIfRequired) ? p : p.Print(method.fullExplicitInterfaceNameIfRequired).Print(".");
@@ -340,6 +376,114 @@ namespace LatiosFramework.Unika.SourceGen
                 }
                 printer.PrintBeginLine().PrintEndLine();
             }
+            int opId = context.methods.Count;
+            for (int i = 0; i < context.properties.Count; i++)
+            {
+                var property = context.properties[i];
+                printer.PrintLine("/// <inheritdoc />");
+                var p = printer.PrintBeginLine(property.accessibility);
+                if (property.returnMod == Microsoft.CodeAnalysis.RefKind.Ref)
+                    p = printer.Print("ref ");
+                else if (property.returnMod == Microsoft.CodeAnalysis.RefKind.RefReadOnly)
+                    p = printer.Print("ref readonly ");
+                p     = p.Print(property.propertyFullTypeName).Print(" ");
+                p     = string.IsNullOrEmpty(property.fullExplicitInterfaceNameIfRequired) ? p : p.Print(property.fullExplicitInterfaceNameIfRequired).Print(".");
+                p.PrintEndLine(property.propertyName);
+                printer.OpenScope();
+                if (property.hasGetter)
+                {
+                    printer.PrintLine("get");
+                    printer.OpenScope();
+                    if (property.returnMod == Microsoft.CodeAnalysis.RefKind.None)
+                        printer.PrintBeginLine(property.propertyFullTypeName).PrintEndLine(" ret = default;");
+                    else
+                        printer.PrintLine("global::Latios.Unika.InternalSourceGen.StaticAPI.ContextPtr ret = default;");
+                    printer.PrintLine($"global::Latios.Unika.InternalSourceGen.StaticAPI.Dispatch(ref __data, {i + opId}, ref ret);");
+                    if (property.returnMod == Microsoft.CodeAnalysis.RefKind.None)
+                        printer.PrintLine("return ret;");
+                    else
+                    {
+                        printer.PrintBeginLine("return ref global::Latios.Unika.InternalSourceGen.StaticAPI.ExtractRefReturn<").Print(property.propertyFullTypeName).
+                        PrintEndLine(">(ret);");
+                    }
+                    printer.CloseScope();
+                    opId++;
+                }
+                if (property.hasSetter)
+                {
+                    printer.PrintLine("set");
+                    printer.OpenScope();
+                    printer.PrintLine("var propertyAssignArg = value;");
+                    printer.PrintLine($"global::Latios.Unika.InternalSourceGen.StaticAPI.Dispatch(ref __data, {i + opId}, ref propertyAssignArg);");
+                    printer.CloseScope();
+                    opId++;
+                }
+                printer.CloseScope();
+            }
+            for (int i = 0; i < context.indexers.Count; i++)
+            {
+                var indexer = context.indexers[i];
+                printer.PrintLine("/// <inheritdoc />");
+                var p = printer.PrintBeginLine(indexer.accessibility);
+                if (indexer.returnMod == Microsoft.CodeAnalysis.RefKind.Ref)
+                    p = printer.Print("ref ");
+                else if (indexer.returnMod == Microsoft.CodeAnalysis.RefKind.RefReadOnly)
+                    p = printer.Print("ref readonly ");
+                p     = p.Print(indexer.propertyFullTypeName).Print(" this[").Print(indexer.arguments[0].argFullTypeName).Print(" ").Print(indexer.arguments[0].argVariableName);
+                for (int j = 1; j < indexer.arguments.Count; j++)
+                {
+                    p = p.Print(", ").Print(indexer.arguments[j].argFullTypeName).Print(" ").Print(indexer.arguments[j].argVariableName);
+                }
+                p.PrintEndLine("]");
+                printer.OpenScope();
+                if (indexer.hasGetter)
+                {
+                    printer.PrintLine("get");
+                    printer.OpenScope();
+                    if (indexer.returnMod == Microsoft.CodeAnalysis.RefKind.None)
+                        printer.PrintBeginLine(indexer.propertyFullTypeName).PrintEndLine(" ret = default;");
+                    else
+                        printer.PrintLine("global::Latios.Unika.InternalSourceGen.StaticAPI.ContextPtr ret = default;");
+                    for (int j = 0; j < indexer.arguments.Count; j++)
+                    {
+                        printer.PrintBeginLine($"var arg{j} = ").Print(indexer.arguments[j].argVariableName).PrintEndLine(";");
+                    }
+                    p = printer.PrintBeginLine($"global::Latios.Unika.InternalSourceGen.StaticAPI.Dispatch(ref __data, {i + opId}, ref ret");
+                    for (int j = 0; j < indexer.arguments.Count; j++)
+                    {
+                        p = p.Print($", ref arg{j}");
+                    }
+                    p.PrintEndLine(");");
+                    if (indexer.returnMod == Microsoft.CodeAnalysis.RefKind.None)
+                        printer.PrintLine("return ret;");
+                    else
+                    {
+                        printer.PrintBeginLine("return ref global::Latios.Unika.InternalSourceGen.StaticAPI.ExtractRefReturn<").Print(indexer.propertyFullTypeName).
+                        PrintEndLine(">(ret);");
+                    }
+                    printer.CloseScope();
+                    opId++;
+                }
+                if (indexer.hasSetter)
+                {
+                    printer.PrintLine("set");
+                    printer.OpenScope();
+                    printer.PrintLine("var propertyAssignArg = value;");
+                    for (int j = 0; j < indexer.arguments.Count; j++)
+                    {
+                        printer.PrintBeginLine($"var arg{j} = ").Print(indexer.arguments[j].argVariableName).PrintEndLine(";");
+                    }
+                    printer.PrintLine($"global::Latios.Unika.InternalSourceGen.StaticAPI.Dispatch(ref __data, {i + opId}, ref propertyAssignArg");
+                    for (int j = 0; j < indexer.arguments.Count; j++)
+                    {
+                        p = p.Print($", ref arg{j}");
+                    }
+                    p.PrintEndLine(");");
+                    printer.CloseScope();
+                    opId++;
+                }
+                printer.CloseScope();
+            }
         }
 
         static void PrintUnpack(ref Printer printer, ref BodyContext context)
@@ -386,9 +530,9 @@ namespace LatiosFramework.Unika.SourceGen
                     if (method.returnMod == Microsoft.CodeAnalysis.RefKind.None)
                         p = p.Print("ret = ");
                     else if (method.returnMod == Microsoft.CodeAnalysis.RefKind.Ref)
-                        p = p.Print("ref var ret = ");
+                        p = p.Print("ref var ret = ref ");
                     else if (method.returnMod == Microsoft.CodeAnalysis.RefKind.RefReadOnly)
-                        p = p.Print("ref readonly var ret = ");
+                        p = p.Print("ref readonly var ret = ref ");
                 }
                 p                      = p.Print("script.").Print(method.methodName).Print("(");
                 bool argumentPreceeded = false;
@@ -415,6 +559,128 @@ namespace LatiosFramework.Unika.SourceGen
                     printer.PrintLine("retPtr = global::Latios.Unika.InternalSourceGen.StaticAPI.AssignRefReadonlyReturn(in ret);");
                 printer.PrintLine("break;");
                 printer.CloseScope();
+            }
+            int opId = context.methods.Count;
+            for (int i = 0; i < context.properties.Count; i++)
+            {
+                var property = context.properties[i];
+                if (property.hasGetter)
+                {
+                    printer.PrintLine($"case {opId}:");
+                    printer.OpenScope();
+                    printer.PrintLine("ref var script = ref global::Latios.Unika.InternalSourceGen.StaticAPI.ExtractScript<TScriptType>(__context);");
+                    if (property.returnMod == Microsoft.CodeAnalysis.RefKind.None)
+                    {
+                        printer.PrintBeginLine("ref var ret = ref global::Latios.Unika.InternalSourceGen.StaticAPI.ExtractArg0<").Print(property.propertyFullTypeName)
+                        .PrintEndLine(">(__context);");
+                    }
+                    else
+                    {
+                        printer.PrintLine(
+                            "ref var retPtr = ref global::Latios.Unika.InternalSourceGen.StaticAPI.ExtractArg0<global::Latios.Unika.InternalSourceGen.StaticAPI.ContextPtr>(__context);");
+                    }
+                    var p = printer.PrintBeginLine();
+                    if (property.returnMod == Microsoft.CodeAnalysis.RefKind.None)
+                        p = p.Print("ret = ");
+                    else if (property.returnMod == Microsoft.CodeAnalysis.RefKind.Ref)
+                        p = p.Print("ref var ret = ref ");
+                    else if (property.returnMod == Microsoft.CodeAnalysis.RefKind.RefReadOnly)
+                        p = p.Print("ref readonly var ret = ref ");
+                    p.Print("script.").Print(property.propertyName).PrintEndLine(";");
+                    if (property.returnMod == Microsoft.CodeAnalysis.RefKind.Ref)
+                        printer.PrintLine("retPtr = global::Latios.Unika.InternalSourceGen.StaticAPI.AssignRefReturn(ref ret);");
+                    else if (property.returnMod == Microsoft.CodeAnalysis.RefKind.RefReadOnly)
+                        printer.PrintLine("retPtr = global::Latios.Unika.InternalSourceGen.StaticAPI.AssignRefReadonlyReturn(in ret);");
+                    printer.PrintLine("break;");
+                    printer.CloseScope();
+                    opId++;
+                }
+                if (property.hasSetter)
+                {
+                    printer.PrintLine($"case {opId}:");
+                    printer.OpenScope();
+                    printer.PrintLine("ref var script = ref global::Latios.Unika.InternalSourceGen.StaticAPI.ExtractScript<TScriptType>(__context);");
+                    printer.PrintBeginLine("ref var propertyAssignArg = ref global::Latios.Unika.InternalSourceGen.StaticAPI.ExtractArg0<").Print(property.propertyFullTypeName)
+                    .PrintEndLine(">(__context);");
+                    printer.PrintBeginLine("script.").Print(property.propertyName).PrintEndLine(" = propertyAssignArg;");
+                    printer.PrintLine("break;");
+                    printer.CloseScope();
+                    opId++;
+                }
+            }
+            for (int i = 0; i < context.indexers.Count; i++)
+            {
+                var indexer = context.indexers[i];
+                if (indexer.hasGetter)
+                {
+                    printer.PrintLine($"case {opId}:");
+                    printer.OpenScope();
+
+                    printer.PrintLine("ref var script = ref global::Latios.Unika.InternalSourceGen.StaticAPI.ExtractScript<TScriptType>(__context);");
+                    if (indexer.returnMod == Microsoft.CodeAnalysis.RefKind.None)
+                    {
+                        printer.PrintBeginLine("ref var ret = ref global::Latios.Unika.InternalSourceGen.StaticAPI.ExtractArg0<").Print(indexer.propertyFullTypeName).
+                        PrintEndLine(">(__context);");
+                    }
+                    else
+                    {
+                        printer.PrintLine(
+                            "ref var retPtr = ref global::Latios.Unika.InternalSourceGen.StaticAPI.ExtractArg0<global::Latios.Unika.InternalSourceGen.StaticAPI.ContextPtr>(__context);");
+                    }
+                    int extractCounter = 1;
+                    foreach (var arg in indexer.arguments)
+                    {
+                        printer.PrintBeginLine("ref var ").Print(arg.argVariableName).Print($" = ref global::Latios.Unika.InternalSourceGen.StaticAPI.ExtractArg{extractCounter}<").
+                        Print(arg.argFullTypeName).PrintEndLine(">(__context);");
+                        extractCounter++;
+                    }
+                    var p = printer.PrintBeginLine();
+
+                    if (indexer.returnMod == Microsoft.CodeAnalysis.RefKind.None)
+                        p = p.Print("ret = ");
+                    else if (indexer.returnMod == Microsoft.CodeAnalysis.RefKind.Ref)
+                        p = p.Print("ref var ret = ref ");
+                    else if (indexer.returnMod == Microsoft.CodeAnalysis.RefKind.RefReadOnly)
+                        p = p.Print("ref readonly var ret = ref ");
+                    p     = p.Print("script[").Print(indexer.arguments[0].argVariableName);
+                    for (int j = 1; j < indexer.arguments.Count; j++)
+                    {
+                        p = p.Print(", ").Print(indexer.arguments[j].argVariableName);
+                    }
+                    p.PrintEndLine("];");
+                    if (indexer.returnMod == Microsoft.CodeAnalysis.RefKind.Ref)
+                        printer.PrintLine("retPtr = global::Latios.Unika.InternalSourceGen.StaticAPI.AssignRefReturn(ref ret);");
+                    else if (indexer.returnMod == Microsoft.CodeAnalysis.RefKind.RefReadOnly)
+                        printer.PrintLine("retPtr = global::Latios.Unika.InternalSourceGen.StaticAPI.AssignRefReadonlyReturn(in ret);");
+                    printer.PrintLine("break;");
+                    printer.CloseScope();
+                    opId++;
+                }
+                if (indexer.hasSetter)
+                {
+                    printer.PrintLine($"case {opId}:");
+                    printer.OpenScope();
+
+                    printer.PrintLine("ref var script = ref global::Latios.Unika.InternalSourceGen.StaticAPI.ExtractScript<TScriptType>(__context);");
+                    printer.PrintBeginLine("ref var propertyAssignArg = ref global::Latios.Unika.InternalSourceGen.StaticAPI.ExtractArg0<").Print(indexer.propertyFullTypeName)
+                    .PrintEndLine(">(__context);");
+                    int extractCounter = 1;
+                    foreach (var arg in indexer.arguments)
+                    {
+                        printer.PrintBeginLine("ref var ").Print(arg.argVariableName).Print($" = ref global::Latios.Unika.InternalSourceGen.StaticAPI.ExtractArg{extractCounter}<").
+                        Print(arg.argFullTypeName).PrintEndLine(">(__context);");
+                        extractCounter++;
+                    }
+                    var p = printer.PrintBeginLine("script[").Print(indexer.arguments[0].argVariableName);
+                    for (int j = 1; j < indexer.arguments.Count; j++)
+                    {
+                        p = p.Print(", ").Print(indexer.arguments[j].argVariableName);
+                    }
+                    p.PrintEndLine("] = propertyAssignArg;");
+                    printer.PrintLine("break;");
+                    printer.CloseScope();
+                    opId++;
+                }
             }
             printer.CloseScope();
             printer.CloseScope();
