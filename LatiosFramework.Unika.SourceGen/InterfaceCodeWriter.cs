@@ -83,9 +83,7 @@ namespace LatiosFramework.Unika.SourceGen
         static void PrintBody(ref Printer printer, ref BodyContext context)
         {
             string surfaceDeclaration = context.baseUnikaInterfaceNames.Count > 0 ? "new public " : "public ";
-            printer.PrintBeginLine(surfaceDeclaration).Print("struct Interface : global::Latios.Unika.InternalSourceGen.StaticAPI.IInterfaceDataTyped<").Print(
-                context.interfaceShortName).PrintEndLine(
-                ", Interface>,");
+            printer.PrintBeginLine(surfaceDeclaration).PrintEndLine("struct Interface : global::Latios.Unika.InternalSourceGen.StaticAPI.IInterfaceData,");
             printer.PrintBeginLine("    ").Print(context.interfaceShortName).PrintEndLine(",");
             printer.PrintLine("    global::System.IEquatable<Interface>,");
             printer.PrintLine("    global::System.IComparable<Interface>,");
@@ -186,8 +184,15 @@ namespace LatiosFramework.Unika.SourceGen
                 printer.PrintBeginLine().PrintEndLine();
                 printer.PrintLine("public global::Latios.Unika.Script ToScript() => this;");
                 printer.PrintLine("global::Latios.Unika.ScriptRef global::Latios.Unika.IScriptExtensionsApi.ToRef() => this;");
-                printer.PrintBeginLine("Interface global::Latios.Unika.InternalSourceGen.StaticAPI.IInterfaceDataTyped<").Print(context.interfaceShortName).PrintEndLine(
-                    ", Interface>.assign { set => this.__data = value.__data; }");
+                printer.PrintBeginLine(
+                    "bool global::Latios.Unika.IScriptTypedExtensionsApi.Is(in global::Latios.Unika.Script script) => global::Latios.Unika.InternalSourceGen.StaticAPI.IsInterface<")
+                .Print(context.interfaceShortName).PrintEndLine(">(in script);");
+                printer.PrintBeginLine(
+                    "bool global::Latios.Unika.IScriptTypedExtensionsApi.TryCastInit(in global::Latios.Unika.Script script, global::Latios.Unika.IScriptTypedExtensionsApi.WrappedThisPtr thisPtr) => global::Latios.Unika.InternalSourceGen.StaticAPI.TryCastInitInterface<")
+                .Print(context.interfaceShortName).PrintEndLine(">(in script, thisPtr);");
+                printer.PrintBeginLine(
+                    "global::Latios.Unika.IScriptTypedExtensionsApi.WrappedIdAndMask global::Latios.Unika.IScriptTypedExtensionsApi.GetIdAndMask() => global::Latios.Unika.InternalSourceGen.StaticAPI.GetIdAndMaskInterface<")
+                .Print(context.interfaceShortName).PrintEndLine(">();");
                 printer.PrintBeginLine().PrintEndLine();
                 PrintPack(ref printer, ref context);
                 printer.CloseScope();
