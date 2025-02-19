@@ -661,7 +661,7 @@ namespace LatiosFramework.SourceGen
                     Printer = Printer.Print("namespace ").PrintEndLine(ns.Name.ToString()).PrintLine("{").WithIncreasedIndent();
                     break;
                 case ClassDeclarationSyntax cl:
-                    if (printBurst)
+                    if (printBurst && !HasBurstAttribute(cl))
                         Printer.PrintLine("[global::Unity.Burst.BurstCompile]");
                     Printer.PrintBeginLine();
                     foreach (var m in cl.Modifiers)
@@ -669,7 +669,7 @@ namespace LatiosFramework.SourceGen
                     Printer = Printer.Print("class ").PrintEndLine(cl.Identifier.Text).PrintLine("{").WithIncreasedIndent();
                     break;
                 case StructDeclarationSyntax st:
-                    if (printBurst)
+                    if (printBurst && !HasBurstAttribute(st))
                         Printer.PrintLine("[global::Unity.Burst.BurstCompile]");
                     Printer.PrintBeginLine();
                     foreach (var m in st.Modifiers)
@@ -677,7 +677,7 @@ namespace LatiosFramework.SourceGen
                     Printer = Printer.Print("struct ").PrintEndLine(st.Identifier.Text).PrintLine("{").WithIncreasedIndent();
                     break;
                 case InterfaceDeclarationSyntax fa:
-                    if (printBurst)
+                    if (printBurst && !HasBurstAttribute(fa))
                         Printer.PrintLine("[global::Unity.Burst.BurstCompile]");
                     Printer.PrintBeginLine();
                     foreach (var m in fa.Modifiers)
@@ -704,6 +704,22 @@ namespace LatiosFramework.SourceGen
                 parent = parent.Parent;
             }
             return this;
+        }
+
+        bool HasBurstAttribute(TypeDeclarationSyntax syntax)
+        {
+            foreach (var line in syntax.AttributeLists)
+            {
+                foreach (var attribute in line.Attributes)
+                {
+                    if (attribute.Name is SimpleNameSyntax simpleName)
+                    {
+                        if (simpleName.Identifier.ValueText == "BurstCompile")
+                            return true;
+                    }
+                }
+            }
+            return false;
         }
     }
 
@@ -753,7 +769,7 @@ namespace LatiosFramework.SourceGen
                     break;
                 case ClassDeclarationSyntax cl:
                     nodesInsideNamespace++;
-                    if (printBurst)
+                    if (printBurst && !HasBurstAttribute(cl))
                         Printer.PrintLine("[global::Unity.Burst.BurstCompile]");
                     UpdateAccess(cl.Modifiers);
                     Printer.PrintBeginLine();
@@ -763,7 +779,7 @@ namespace LatiosFramework.SourceGen
                     break;
                 case StructDeclarationSyntax st:
                     nodesInsideNamespace++;
-                    if (printBurst)
+                    if (printBurst && !HasBurstAttribute(st))
                         Printer.PrintLine("[global::Unity.Burst.BurstCompile]");
                     UpdateAccess(st.Modifiers);
                     Printer.PrintBeginLine();
@@ -773,7 +789,7 @@ namespace LatiosFramework.SourceGen
                     break;
                 case InterfaceDeclarationSyntax fa:
                     nodesInsideNamespace++;
-                    if (printBurst)
+                    if (printBurst && !HasBurstAttribute(fa))
                         Printer.PrintLine("[global::Unity.Burst.BurstCompile]");
                     UpdateAccess(fa.Modifiers);
                     Printer.PrintBeginLine();
@@ -842,6 +858,22 @@ namespace LatiosFramework.SourceGen
                 mostRestrictiveAccessType = AccessType.Private;
             else if (hasInternal || !hasPublic)
                 mostRestrictiveAccessType = AccessType.Internal;
+        }
+
+        bool HasBurstAttribute(TypeDeclarationSyntax syntax)
+        {
+            foreach (var line in syntax.AttributeLists)
+            {
+                foreach (var attribute in line.Attributes)
+                {
+                    if (attribute.Name is SimpleNameSyntax simpleName)
+                    {
+                        if (simpleName.Identifier.ValueText == "BurstCompile")
+                            return true;
+                    }
+                }
+            }
+            return false;
         }
     }
 }
