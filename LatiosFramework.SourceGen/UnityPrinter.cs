@@ -654,7 +654,7 @@ namespace LatiosFramework.SourceGen
 
             switch (node)
             {
-                case NamespaceDeclarationSyntax ns:
+                case BaseNamespaceDeclarationSyntax ns:
                     Printer.PrintBeginLine();
                     foreach (var m in ns.Modifiers)
                         Printer.Print(m.ToString()).Print(" ");
@@ -695,7 +695,7 @@ namespace LatiosFramework.SourceGen
             {
                 switch (parent)
                 {
-                    case NamespaceDeclarationSyntax _:
+                    case BaseNamespaceDeclarationSyntax _:
                     case ClassDeclarationSyntax _:
                     case StructDeclarationSyntax _:
                         Printer = Printer.WithDecreasedIndent().PrintLine("}");
@@ -760,7 +760,7 @@ namespace LatiosFramework.SourceGen
 
             switch (node)
             {
-                case NamespaceDeclarationSyntax ns:
+                case BaseNamespaceDeclarationSyntax ns:
                     nodesOfNamespace++;
                     Printer.PrintBeginLine();
                     foreach (var m in ns.Modifiers)
