@@ -87,7 +87,7 @@ namespace LatiosFramework.SourceGen
             printer.PrintBeginLine(surfaceDeclaration).PrintEndLine("struct VPtrFunction : global::System.IEquatable<VPtrFunction>");
             printer.OpenScope();
             printer.PrintLine("global::Unity.Burst.FunctionPointer<global::Latios.Unsafe.InternalSourceGen.StaticAPI.BurstDispatchVptrDelegate> __functionPtr;");
-            printer.PrintLine("public bool Equals(VPtrFunction other) => __functionPtr.Value.Equals(other.__functionPtr.Value);");
+            printer.PrintLine("public bool Equals(VPtrFunction other) => __functionPtr.Value == other.__functionPtr.Value;");
             printer.PrintLine("public override int GetHashCode() => __functionPtr.Value.GetHashCode();");
             printer.CloseScope();
             printer.PrintBeginLine().PrintEndLine();
