@@ -591,7 +591,7 @@ namespace LatiosFramework.Unika.SourceGen
                         p = p.Print("ref var __ret = ref ");
                     else if (property.returnMod == Microsoft.CodeAnalysis.RefKind.RefReadOnly)
                         p = p.Print("ref readonly var __ret = ref ");
-                    p.Print("script.").Print(property.propertyName).PrintEndLine(";");
+                    p.Print("__script.").Print(property.propertyName).PrintEndLine(";");
                     if (property.returnMod == Microsoft.CodeAnalysis.RefKind.Ref)
                         printer.PrintLine("__retPtr = global::Latios.Unika.InternalSourceGen.StaticAPI.AssignRefReturn(ref __ret);");
                     else if (property.returnMod == Microsoft.CodeAnalysis.RefKind.RefReadOnly)
