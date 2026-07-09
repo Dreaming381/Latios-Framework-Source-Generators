@@ -231,50 +231,50 @@ namespace LatiosFramework.SourceGen
                     {
                         if (arg.argMod == Microsoft.CodeAnalysis.RefKind.None)
                         {
-                            printer.PrintBeginLine($"var arg{argCounter} = ").Print(arg.argVariableName).PrintEndLine(";");
+                            printer.PrintBeginLine($"var __arg{argCounter} = ").Print(arg.argVariableName).PrintEndLine(";");
                         }
                         else if (arg.argMod == Microsoft.CodeAnalysis.RefKind.In)
                         {
-                            printer.PrintBeginLine($"ref var arg{argCounter} = ref global::Unity.Collections.LowLevel.Unsafe.UnsafeUtilityExtensions.AsRef(in ").Print(
+                            printer.PrintBeginLine($"ref var __arg{argCounter} = ref global::Unity.Collections.LowLevel.Unsafe.UnsafeUtilityExtensions.AsRef(in ").Print(
                                 arg.argVariableName).PrintEndLine(");");
                         }
                         else if (arg.argMod == Microsoft.CodeAnalysis.RefKind.Out)
                         {
                             printer.PrintBeginLine(arg.argVariableName).PrintEndLine(" = default;");
-                            printer.PrintBeginLine($"ref var arg{argCounter} = ref ").Print(arg.argVariableName).PrintEndLine(";");
+                            printer.PrintBeginLine($"ref var __arg{argCounter} = ref ").Print(arg.argVariableName).PrintEndLine(";");
                         }
                         else if (arg.argMod == Microsoft.CodeAnalysis.RefKind.Ref)
                         {
-                            printer.PrintBeginLine($"ref var arg{argCounter} = ref ").Print(arg.argVariableName).PrintEndLine(";");
+                            printer.PrintBeginLine($"ref var __arg{argCounter} = ref ").Print(arg.argVariableName).PrintEndLine(";");
                         }
                         argCounter++;
                     }
                     if (hasReturn)
                     {
                         if (method.returnMod == Microsoft.CodeAnalysis.RefKind.None)
-                            printer.PrintBeginLine(method.returnFullTypeNameIfNotVoid).PrintEndLine(" ret = default;");
+                            printer.PrintBeginLine(method.returnFullTypeNameIfNotVoid).PrintEndLine(" __ret = default;");
                         else
-                            printer.PrintLine("global::Latios.Unsafe.InternalSourceGen.StaticAPI.ContextPtr ret = default;");
+                            printer.PrintLine("global::Latios.Unsafe.InternalSourceGen.StaticAPI.ContextPtr __ret = default;");
                     }
                     printer.PrintLine("var __vptrDelegate = global::Latios.Unsafe.InternalSourceGen.StaticAPI.ConvertFunctionPointerFromWrapper(__function);");
                     p = printer.PrintBeginLine($"global::Latios.Unsafe.InternalSourceGen.StaticAPI.Dispatch(__ptr, __vptrDelegate, {i}");
                     if (hasReturn)
-                        p.Print(", ref ret");
+                        p.Print(", ref __ret");
                     argCounter = 0;
                     foreach (var arg in method.arguments)
                     {
-                        p = printer.Print($", ref arg{argCounter}");
+                        p = printer.Print($", ref __arg{argCounter}");
                         argCounter++;
                     }
                     p.PrintEndLine(");");
                     if (hasReturn)
                     {
                         if (method.returnMod == Microsoft.CodeAnalysis.RefKind.None)
-                            printer.PrintLine("return ret;");
+                            printer.PrintLine("return __ret;");
                         else
                         {
                             printer.PrintBeginLine("return ref global::Latios.Unsafe.InternalSourceGen.StaticAPI.ExtractRefReturn<").Print(method.returnFullTypeNameIfNotVoid).
-                            PrintEndLine(">(ret);");
+                            PrintEndLine(">(__ret);");
                         }
                     }
                     printer.CloseScope();
@@ -300,16 +300,16 @@ namespace LatiosFramework.SourceGen
                     printer.PrintLine("get");
                     printer.OpenScope();
                     if (property.returnMod == Microsoft.CodeAnalysis.RefKind.None)
-                        printer.PrintBeginLine(property.propertyFullTypeName).PrintEndLine(" ret = default;");
+                        printer.PrintBeginLine(property.propertyFullTypeName).PrintEndLine(" __ret = default;");
                     else
-                        printer.PrintLine("global::Latios.Unsafe.InternalSourceGen.StaticAPI.ContextPtr ret = default;");
-                    printer.PrintLine($"global::Latios.Unsafe.InternalSourceGen.StaticAPI.Dispatch(__ptr, __function, {i + opId}, ref ret);");
+                        printer.PrintLine("global::Latios.Unsafe.InternalSourceGen.StaticAPI.ContextPtr __ret = default;");
+                    printer.PrintLine($"global::Latios.Unsafe.InternalSourceGen.StaticAPI.Dispatch(__ptr, __function, {opId}, ref __ret);");
                     if (property.returnMod == Microsoft.CodeAnalysis.RefKind.None)
-                        printer.PrintLine("return ret;");
+                        printer.PrintLine("return __ret;");
                     else
                     {
                         printer.PrintBeginLine("return ref global::Latios.Unsafe.InternalSourceGen.StaticAPI.ExtractRefReturn<").Print(property.propertyFullTypeName).
-                        PrintEndLine(">(ret);");
+                        PrintEndLine(">(__ret);");
                     }
                     printer.CloseScope();
                     opId++;
@@ -318,8 +318,8 @@ namespace LatiosFramework.SourceGen
                 {
                     printer.PrintLine("set");
                     printer.OpenScope();
-                    printer.PrintLine("var propertyAssignArg = value;");
-                    printer.PrintLine($"global::Latios.Unsafe.InternalSourceGen.StaticAPI.Dispatch(__ptr, __function, {i + opId}, ref propertyAssignArg);");
+                    printer.PrintLine("var __propertyAssignArg = value;");
+                    printer.PrintLine($"global::Latios.Unsafe.InternalSourceGen.StaticAPI.Dispatch(__ptr, __function, {opId}, ref __propertyAssignArg);");
                     printer.CloseScope();
                     opId++;
                 }
@@ -346,25 +346,25 @@ namespace LatiosFramework.SourceGen
                     printer.PrintLine("get");
                     printer.OpenScope();
                     if (indexer.returnMod == Microsoft.CodeAnalysis.RefKind.None)
-                        printer.PrintBeginLine(indexer.propertyFullTypeName).PrintEndLine(" ret = default;");
+                        printer.PrintBeginLine(indexer.propertyFullTypeName).PrintEndLine(" __ret = default;");
                     else
-                        printer.PrintLine("global::Latios.Unsafe.InternalSourceGen.StaticAPI.ContextPtr ret = default;");
+                        printer.PrintLine("global::Latios.Unsafe.InternalSourceGen.StaticAPI.ContextPtr __ret = default;");
                     for (int j = 0; j < indexer.arguments.Count; j++)
                     {
-                        printer.PrintBeginLine($"var arg{j} = ").Print(indexer.arguments[j].argVariableName).PrintEndLine(";");
+                        printer.PrintBeginLine($"var __arg{j} = ").Print(indexer.arguments[j].argVariableName).PrintEndLine(";");
                     }
-                    p = printer.PrintBeginLine($"global::Latios.Unsafe.InternalSourceGen.StaticAPI.Dispatch(__ptr, __function, {i + opId}, ref ret");
+                    p = printer.PrintBeginLine($"global::Latios.Unsafe.InternalSourceGen.StaticAPI.Dispatch(__ptr, __function, {opId}, ref __ret");
                     for (int j = 0; j < indexer.arguments.Count; j++)
                     {
-                        p = p.Print($", ref arg{j}");
+                        p = p.Print($", ref __arg{j}");
                     }
                     p.PrintEndLine(");");
                     if (indexer.returnMod == Microsoft.CodeAnalysis.RefKind.None)
-                        printer.PrintLine("return ret;");
+                        printer.PrintLine("return __ret;");
                     else
                     {
                         printer.PrintBeginLine("return ref global::Latios.Unsafe.InternalSourceGen.StaticAPI.ExtractRefReturn<").Print(indexer.propertyFullTypeName).
-                        PrintEndLine(">(ret);");
+                        PrintEndLine(">(__ret);");
                     }
                     printer.CloseScope();
                     opId++;
@@ -373,15 +373,15 @@ namespace LatiosFramework.SourceGen
                 {
                     printer.PrintLine("set");
                     printer.OpenScope();
-                    printer.PrintLine("var propertyAssignArg = value;");
+                    printer.PrintLine("var __propertyAssignArg = value;");
                     for (int j = 0; j < indexer.arguments.Count; j++)
                     {
-                        printer.PrintBeginLine($"var arg{j} = ").Print(indexer.arguments[j].argVariableName).PrintEndLine(";");
+                        printer.PrintBeginLine($"var __arg{j} = ").Print(indexer.arguments[j].argVariableName).PrintEndLine(";");
                     }
-                    printer.PrintLine($"global::Latios.Unsafe.InternalSourceGen.StaticAPI.Dispatch(__ptr, __function, {i + opId}, ref propertyAssignArg");
+                    printer.PrintLine($"global::Latios.Unsafe.InternalSourceGen.StaticAPI.Dispatch(__ptr, __function, {opId}, ref __propertyAssignArg");
                     for (int j = 0; j < indexer.arguments.Count; j++)
                     {
-                        p = p.Print($", ref arg{j}");
+                        p = p.Print($", ref __arg{j}");
                     }
                     p.PrintEndLine(");");
                     printer.CloseScope();
