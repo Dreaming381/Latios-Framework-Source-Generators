@@ -22,6 +22,11 @@ namespace LatiosFramework.SourceGen
             // Field type is one of the built-in Unity Entities handle/lookup types that take no arguments.
             // Initialized via state.<builtinGetterMethodName>().
             BuiltinNoBool,
+            // Field type is one of the built-in Unity Entities handle/lookup types that take no arguments.
+            // Initialized via state.<builtinGetterMethodName><TComponentOrBuffer>(b).
+            BuiltinNoBoolGeneric,
+            // Field type implements IInjectable. Initialized via StaticAPI.CreateInjectable<T>(ref state).
+            Injectable,
         }
 
         public struct FieldEntry
@@ -37,6 +42,7 @@ namespace LatiosFramework.SourceGen
         public struct BodyContext
         {
             public string           structShortName;
+            public string           structFullName;
             public List<FieldEntry> fields;
         }
 
@@ -46,12 +52,14 @@ namespace LatiosFramework.SourceGen
                                                out BodyContext bodyContext)
         {
             bodyContext.structShortName = structDeclarationSyntax.Identifier.ToString();
+            bodyContext.structFullName  = null;
             bodyContext.fields          = new List<FieldEntry>();
 
             var declaringModel = compilation.GetSemanticModel(structDeclarationSyntax.SyntaxTree);
-            var structSymbol   = declaringModel.GetDeclaredSymbol(structDeclarationSyntax, context.CancellationToken);
+            var structSymbol   = declaringModel.GetDeclaredSymbol(structDeclarationSyntax, context.CancellationToken) as INamedTypeSymbol;
             if (structSymbol == null)
                 return;
+            bodyContext.structFullName = structSymbol.ToFullName();
 
             var stringBuilder = new StringBuilder();
 
@@ -80,6 +88,13 @@ namespace LatiosFramework.SourceGen
         {
             if (!(semanticModel.GetSymbolInfo(invocation, context.CancellationToken).Symbol is IMethodSymbol methodSymbol))
                 return;
+
+            if (methodSymbol.Name == "Inject" || methodSymbol.Name == "InjectByRef")
+            {
+                TryProcessInjectInvocation(methodSymbol, fields, stringBuilder);
+                return;
+            }
+
             if (!methodSymbol.Name.StartsWith("Get", StringComparison.Ordinal))
                 return;
 
@@ -129,6 +144,32 @@ namespace LatiosFramework.SourceGen
             });
         }
 
+        // Recognizes calls to Latios.LatiosApiCreateExtensions.Inject<TInject, TSystem>()/InjectByRef<TInject, TSystem>()
+        // (invoked as injectable.Inject(api) / injectable.InjectByRef(api)) and caches TInject the same way a
+        // Gettable field is cached, so ILatiosApi.__Get<TInject>() can later resolve the cached instance for it.
+        static void TryProcessInjectInvocation(IMethodSymbol methodSymbol, List<FieldEntry> fields, StringBuilder stringBuilder)
+        {
+            var thisOriginal = methodSymbol.ContainingType?.OriginalDefinition;
+            if (thisOriginal == null || thisOriginal.Name != "LatiosApiCreateExtensions" ||
+                thisOriginal.ContainingNamespace?.ToDisplayString() != "Latios")
+                return;
+
+            if (methodSymbol.TypeArguments.Length < 1)
+                return;
+            var injectableType = methodSymbol.TypeArguments[0];
+
+            if (TryFindExisting(fields, injectableType, null))
+                return;
+
+            fields.Add(new FieldEntry
+            {
+                type      = injectableType,
+                boolValue = null,
+                fieldName = MakeFieldName(fields, injectableType, null, stringBuilder),
+                initKind  = FieldInitKind.Injectable,
+            });
+        }
+
         static ArgumentSyntax FindArgumentForParameter(InvocationExpressionSyntax invocation, IParameterSymbol parameter)
         {
             var args = invocation.ArgumentList.Arguments;
@@ -152,7 +193,9 @@ namespace LatiosFramework.SourceGen
             return false;
         }
 
-        static FieldInitKind? ClassifyReturnType(ITypeSymbol returnType, out string builtinGetterMethodName)
+        // Shared with InjectableSemanticsExtractor so it can reuse this exact taxonomy for classifying
+        // [Inject] field types instead of duplicating the hardcoded Unity.Entities type-name switch.
+        internal static FieldInitKind? ClassifyReturnType(ITypeSymbol returnType, out string builtinGetterMethodName)
         {
             builtinGetterMethodName = null;
 
@@ -178,6 +221,9 @@ namespace LatiosFramework.SourceGen
                     case "BufferLookup":
                         builtinGetterMethodName = "GetBufferLookup";
                         return FieldInitKind.BuiltinWithBool;
+                    case "SharedComponentTypeHandle":
+                        builtinGetterMethodName = "GetSharedComponentTypeHandle";
+                        return FieldInitKind.BuiltinNoBoolGeneric;
                     case "EntityTypeHandle":
                         builtinGetterMethodName = "GetEntityTypeHandle";
                         return FieldInitKind.BuiltinNoBool;

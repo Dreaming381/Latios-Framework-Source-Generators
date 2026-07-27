@@ -1,6 +1,6 @@
 // This file was originally written with Claude.
 using System;
-using System.IO;
+using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -33,12 +33,14 @@ namespace LatiosFramework.SourceGen
             context.CancellationToken.ThrowIfCancellationRequested();
             try
             {
-                var syntaxTree     = structSyntax.SyntaxTree;
-                var filename       = Path.GetFileNameWithoutExtension(syntaxTree.FilePath);
-                var outputFilename = $"{filename}_{structSyntax.Identifier}_ILatiosApi.gen.cs";
-
                 LatiosApiSemanticsExtractor.ExtractApiSemantics(structSyntax, compilation, context, out var bodyContext);
                 var code = ILatiosApiCodeWriter.WriteApiCode(structSyntax, ref bodyContext);
+
+                // See the identical comment in InjectableGenerator.GenerateOutput: the hint name must be unique
+                // across the whole compilation, not just this file, so it's built from the fully-qualified type
+                // name rather than just the file name + immediate identifier (which would collide if two files
+                // sharing a name each declared a same-named ILatiosApi system).
+                var outputFilename = SanitizeHintName(bodyContext.structFullName) + "_ILatiosApi.gen.cs";
 
                 context.AddSource(outputFilename, code);
             }
@@ -49,6 +51,14 @@ namespace LatiosFramework.SourceGen
                 context.ReportDiagnostic(
                     Diagnostic.Create(InternalErrorDescriptor, structSyntax.GetLocation(), e.ToUnityPrintableString()));
             }
+        }
+
+        static string SanitizeHintName(string fullyQualifiedName)
+        {
+            var sb = new StringBuilder(fullyQualifiedName.Length);
+            foreach (var c in fullyQualifiedName)
+                sb.Append(char.IsLetterOrDigit(c) ? c : '_');
+            return sb.ToString();
         }
 
         public static readonly DiagnosticDescriptor InternalErrorDescriptor =

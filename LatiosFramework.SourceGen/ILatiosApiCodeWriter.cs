@@ -48,23 +48,7 @@ namespace LatiosFramework.SourceGen
             foreach (var field in context.fields)
             {
                 printer.PrintBeginLine("__latiosApiState.").Print(field.fieldName).Print(" = ");
-                switch (field.initKind)
-                {
-                    case LatiosApiSemanticsExtractor.FieldInitKind.Gettable:
-                        printer.Print("global::Latios.InternalSourceGen.StaticAPI.Create<").Print(field.type.ToFullName()).Print(">(ref state)");
-                        break;
-                    case LatiosApiSemanticsExtractor.FieldInitKind.GettableBool:
-                        printer.Print("global::Latios.InternalSourceGen.StaticAPI.Create<").Print(field.type.ToFullName()).Print(">(ref state, ").Print(
-                            field.boolValue.Value ? "true" : "false").Print(")");
-                        break;
-                    case LatiosApiSemanticsExtractor.FieldInitKind.BuiltinWithBool:
-                        printer.Print("state.").Print(field.builtinGetterMethodName).Print("<").Print(GetSoleTypeArgumentFullName(field.type)).Print(">(").Print(
-                            field.boolValue.Value ? "true" : "false").Print(")");
-                        break;
-                    case LatiosApiSemanticsExtractor.FieldInitKind.BuiltinNoBool:
-                        printer.Print("state.").Print(field.builtinGetterMethodName).Print("()");
-                        break;
-                }
+                PrintFieldConstructionExpression(ref printer, field.initKind, field.type, field.boolValue, field.builtinGetterMethodName);
                 printer.PrintEndLine(";");
             }
             printer.CloseScope();
@@ -107,7 +91,40 @@ namespace LatiosFramework.SourceGen
             printer.PrintLine("global::Latios.LatiosWorldUnmanaged global::Latios.ILatiosApi.__GetLatiosWorldUnmanaged() => __latiosApiState.latiosWorldUnmanaged;");
         }
 
-        static string GetSoleTypeArgumentFullName(ITypeSymbol type)
+        // Shared with InjectableCodeWriter, since __CreateForApi's per-[Inject]-field construction is the same
+        // taxonomy of expressions as __OnCreateForLatios's per-cached-field construction above.
+        internal static void PrintFieldConstructionExpression(ref Printer printer,
+                                                              LatiosApiSemanticsExtractor.FieldInitKind initKind,
+                                                              ITypeSymbol type,
+                                                              bool?                                     boolValue,
+                                                              string builtinGetterMethodName)
+        {
+            switch (initKind)
+            {
+                case LatiosApiSemanticsExtractor.FieldInitKind.Gettable:
+                    printer.Print("global::Latios.InternalSourceGen.StaticAPI.Create<").Print(type.ToFullName()).Print(">(ref state)");
+                    break;
+                case LatiosApiSemanticsExtractor.FieldInitKind.GettableBool:
+                    printer.Print("global::Latios.InternalSourceGen.StaticAPI.Create<").Print(type.ToFullName()).Print(">(ref state, ").Print(
+                        boolValue.Value ? "true" : "false").Print(")");
+                    break;
+                case LatiosApiSemanticsExtractor.FieldInitKind.BuiltinWithBool:
+                    printer.Print("state.").Print(builtinGetterMethodName).Print("<").Print(GetSoloTypeArgumentFullName(type)).Print(">(").Print(
+                        boolValue.Value ? "true" : "false").Print(")");
+                    break;
+                case LatiosApiSemanticsExtractor.FieldInitKind.BuiltinNoBool:
+                    printer.Print("state.").Print(builtinGetterMethodName).Print("()");
+                    break;
+                case LatiosApiSemanticsExtractor.FieldInitKind.BuiltinNoBoolGeneric:
+                    printer.Print("state.").Print(builtinGetterMethodName).Print("<").Print(GetSoloTypeArgumentFullName(type)).Print(">()");
+                    break;
+                case LatiosApiSemanticsExtractor.FieldInitKind.Injectable:
+                    printer.Print("global::Latios.InternalSourceGen.StaticAPI.CreateInjectable<").Print(type.ToFullName()).Print(">(ref state)");
+                    break;
+            }
+        }
+
+        static string GetSoloTypeArgumentFullName(ITypeSymbol type)
         {
             if (type is INamedTypeSymbol named && named.TypeArguments.Length == 1)
                 return named.TypeArguments[0].ToFullName();
