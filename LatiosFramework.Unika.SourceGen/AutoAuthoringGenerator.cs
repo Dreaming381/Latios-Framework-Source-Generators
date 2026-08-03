@@ -24,8 +24,8 @@ namespace LatiosFramework.Unika.SourceGen
             //Debugger.Launch();
 
             var candidateProvider = context.SyntaxProvider.CreateSyntaxProvider(
-                predicate: (node, token) => GeneratorFilterMethods.IsSyntaxClassGenericMatch(node, token, "UnikaAutoScriptAuthoring"),
-                transform: (node, token) => GetSemanticDirectGenericMatch(node, token, "global::Latios.Unika.Authoring.UnikaAutoScriptAuthoring<T>")
+                predicate: (node, token) => GeneratorFilterMethods.IsSyntaxClassGenericMatch(node, token, "UnikaScriptAutoAuthoring"),
+                transform: (node, token) => GetSemanticDirectGenericMatch(node, token, "global::Latios.Unika.Authoring.UnikaScriptAutoAuthoring<T>")
                 ).Where(t => t is { });
 
             var compilationProvider = context.CompilationProvider;
@@ -39,7 +39,7 @@ namespace LatiosFramework.Unika.SourceGen
         }
 
         // Similar to GeneratorFilterMethods.GetSemanticClassGenericMatch, except it matches against the
-        // class's own base type rather than its base type's base type, since UnikaAutoScriptAuthoring<T>
+        // class's own base type rather than its base type's base type, since UnikaScriptAutoAuthoring<T>
         // is the type directly inherited by the user's authoring class.
         static ClassDeclarationSyntax GetSemanticDirectGenericMatch(GeneratorSyntaxContext ctx, CancellationToken cancellationToken, string fullSemanticGenericDefinitionName)
         {
@@ -79,9 +79,9 @@ namespace LatiosFramework.Unika.SourceGen
         }
 
         public static readonly DiagnosticDescriptor CollectionComponentErrorDescriptor =
-            new DiagnosticDescriptor("Unika_SG_04", "UnikaAutoScriptAuthoring Generator Error",
+            new DiagnosticDescriptor("Unika_SG_04", "UnikaScriptAutoAuthoring Generator Error",
                                      "This error indicates a bug in the Latios Framework source generators. We'd appreciate a bug report. Thanks! Error message: '{0}'.",
-                                     "Latios.Unika.Authoring.UnikaAutoScriptAuthoring<>", DiagnosticSeverity.Error, isEnabledByDefault: true, description: "");
+                                     "Latios.Unika.Authoring.UnikaScriptAutoAuthoring<>", DiagnosticSeverity.Error, isEnabledByDefault: true, description: "");
     }
 }
 
