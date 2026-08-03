@@ -270,6 +270,157 @@ namespace LatiosFramework.Unika.SourceGen
             }
         }
 
+        public static void ExtractAutoAuthoringSemantics(ClassDeclarationSyntax classDeclarationSyntax,
+                                                         SemanticModel semanticModel,
+                                                         out AutoAuthoringCodeWriter.Context context)
+        {
+            var classDeclarationSymbol = semanticModel.GetDeclaredSymbol(classDeclarationSyntax);
+            var classTypeSymbol        = classDeclarationSymbol.GetSymbolType();
+            var genericAuthoringType   = classTypeSymbol.BaseType;
+            var scriptType             = genericAuthoringType.TypeArguments[0];
+            context.scriptFullTypeName = scriptType.ToFullName();
+            context.fields             = new List<AutoAuthoringCodeWriter.FieldInfo>();
+
+            var usingDirectiveTexts = new List<string>();
+            var seenUsingTexts      = new HashSet<string>();
+            foreach (var syntaxRef in scriptType.DeclaringSyntaxReferences)
+            {
+                if (syntaxRef.GetSyntax().SyntaxTree.GetRoot() is CompilationUnitSyntax compilationUnit)
+                {
+                    foreach (var usingDirective in compilationUnit.Usings)
+                    {
+                        var text = usingDirective.ToString();
+                        if (seenUsingTexts.Add(text))
+                            usingDirectiveTexts.Add(text);
+                    }
+                }
+            }
+            context.usingDirectiveTexts = usingDirectiveTexts;
+
+            // Needed to reopen the script struct's own namespace/type scope, so that an internal helper
+            // method can be added to it for assigning its non-public [SerializeField] fields (an authoring
+            // class is a different type and cannot assign private fields on the script struct directly).
+            context.scriptDeclarationSyntax = (StructDeclarationSyntax)scriptType.DeclaringSyntaxReferences[0].GetSyntax();
+
+            // UnikaAutoScriptAuthoring<T> subclasses don't get matched by AuthoringGenerator (which only
+            // matches direct UnikaScriptAuthoring<T> subclasses), so this generator implements the
+            // IUnikaInterfaceAuthoringImpl<...> boilerplate itself for every Unika interface the script implements.
+            context.baseUnikaInterfaceNames = new List<string>();
+            foreach (var iface in scriptType.AllInterfaces)
+            {
+                if (iface.InheritsFromInterface("global::Latios.Unika.IUnikaInterface"))
+                    context.baseUnikaInterfaceNames.Add(iface.ToFullName());
+            }
+
+            foreach (var fieldSymbol in scriptType.GetMembers().OfType<IFieldSymbol>())
+            {
+                if (fieldSymbol.IsStatic || fieldSymbol.IsConst || fieldSymbol.IsReadOnly)
+                    continue;
+
+                bool isPublic = fieldSymbol.DeclaredAccessibility == Accessibility.Public;
+                if (isPublic)
+                {
+                    if (fieldSymbol.HasAttribute("System.NonSerializedAttribute"))
+                        continue;
+                }
+                else if (!fieldSymbol.HasAttribute("UnityEngine.SerializeField"))
+                    continue;
+
+                var fieldType = fieldSymbol.Type;
+
+                // BlobAssetReference<T> fields are intentionally ignored. The user is responsible for
+                // assigning them from OnAutoBake, immediately or via a Smart Blobber.
+                if (TryGetGenericTypeArgument(fieldType, "Unity.Entities", "BlobAssetReference", out _))
+                    continue;
+
+                AutoAuthoringCodeWriter.FieldKind kind;
+                string                            authoringFieldTypeName;
+                string                            scriptFieldTypeName;
+
+                if (fieldType is INamedTypeSymbol namedFieldType && namedFieldType.Name == "ScriptRef" &&
+                    namedFieldType.ContainingNamespace?.ToDisplayString() == "Latios.Unika")
+                {
+                    kind                 = AutoAuthoringCodeWriter.FieldKind.ScriptRef;
+                    scriptFieldTypeName  = fieldType.ToFullName();
+                    authoringFieldTypeName  = namedFieldType.IsGenericType ?
+                                              $"global::Latios.Unika.Authoring.UnikaScriptAuthoring<{namedFieldType.TypeArguments[0].ToFullName()}>" :
+                                              "global::Latios.Unika.Authoring.UnikaScriptAuthoringBase";
+                }
+                // A generator cannot semantically see the InterfaceRef struct that InterfaceGenerator nests
+                // inside a IUnikaInterface type (generators never observe each other's generated output), so
+                // this is detected and reconstructed by name/convention rather than by inspecting fieldType's
+                // members, exactly like AuthoringCodeWriter already does for the same reason.
+                else if (fieldType.Name == "InterfaceRef" && fieldType.ContainingType != null &&
+                         fieldType.ContainingType.TypeKind == TypeKind.Interface &&
+                         fieldType.ContainingType.InheritsFromInterface("global::Latios.Unika.IUnikaInterface"))
+                {
+                    kind                    = AutoAuthoringCodeWriter.FieldKind.InterfaceRef;
+                    scriptFieldTypeName     = $"{fieldType.ContainingType.ToFullName()}.InterfaceRef";
+                    authoringFieldTypeName  = $"global::Latios.Unika.Authoring.IUnikaInterfaceAuthoring<{scriptFieldTypeName}>";
+                }
+                else if (fieldType.ToFullName() == "global::Unity.Entities.Entity")
+                {
+                    kind                    = AutoAuthoringCodeWriter.FieldKind.Entity;
+                    scriptFieldTypeName     = fieldType.ToFullName();
+                    authoringFieldTypeName  = "global::UnityEngine.GameObject";
+                }
+                else if (TryGetGenericTypeArgument(fieldType, "Latios", "EntityWith", out _) ||
+                         TryGetGenericTypeArgument(fieldType, "Latios", "EntityWithBuffer", out _))
+                {
+                    kind                    = AutoAuthoringCodeWriter.FieldKind.Entity;
+                    scriptFieldTypeName     = fieldType.ToFullName();
+                    authoringFieldTypeName  = "global::UnityEngine.GameObject";
+                }
+                else
+                {
+                    kind                    = AutoAuthoringCodeWriter.FieldKind.Mirror;
+                    scriptFieldTypeName     = fieldType.ToFullName();
+                    authoringFieldTypeName  = scriptFieldTypeName;
+                }
+
+                var attributeTexts = new List<string>();
+                foreach (var syntaxRef in fieldSymbol.DeclaringSyntaxReferences)
+                {
+                    if (syntaxRef.GetSyntax() is VariableDeclaratorSyntax variableDeclarator &&
+                        variableDeclarator.Parent?.Parent is FieldDeclarationSyntax fieldDeclaration)
+                    {
+                        foreach (var attributeList in fieldDeclaration.AttributeLists)
+                        {
+                            foreach (var attribute in attributeList.Attributes)
+                            {
+                                var attributeName = attribute.Name.ToString();
+                                if (attributeName == "SerializeField" || attributeName == "NonSerialized")
+                                    continue;
+                                attributeTexts.Add($"[{attribute}]");
+                            }
+                        }
+                    }
+                }
+
+                context.fields.Add(new AutoAuthoringCodeWriter.FieldInfo
+                {
+                    fieldName              = fieldSymbol.Name,
+                    isPublic               = isPublic,
+                    authoringFieldTypeName = authoringFieldTypeName,
+                    scriptFieldTypeName    = scriptFieldTypeName,
+                    attributeTexts         = attributeTexts,
+                    kind                   = kind,
+                });
+            }
+        }
+
+        static bool TryGetGenericTypeArgument(ITypeSymbol type, string ns, string name, out ITypeSymbol typeArgument)
+        {
+            typeArgument = null;
+            if (type is INamedTypeSymbol named && named.IsGenericType && named.Arity == 1 &&
+                named.Name == name && named.ContainingNamespace?.ToDisplayString() == ns)
+            {
+                typeArgument = named.TypeArguments[0];
+                return true;
+            }
+            return false;
+        }
+
         struct MethodComparer : IComparer<InterfaceCodeWriter.MethodDescription>
         {
             public int Compare(InterfaceCodeWriter.MethodDescription x, InterfaceCodeWriter.MethodDescription y)
